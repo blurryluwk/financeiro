@@ -1,9 +1,11 @@
+export type TransactionCategory = 'Alimentação' | 'Mobilidade' | 'Salário' | 'Lazer' | 'Outros';
+
 export type Transaction = {
   description: string;
   amount: number;
   date: string;
   type: 'income' | 'expense';
-  category: 'Alimentação' | 'Mobilidade' | 'Salário' | 'Lazer' | 'Outros';
+  category: TransactionCategory;
 };
 
 export const transactions: Transaction[] = [
