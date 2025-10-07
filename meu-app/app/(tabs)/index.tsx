@@ -1,24 +1,47 @@
-// app/(tabs)/index.tsx
-
-import React from "react";
-import { StyleSheet, ScrollView } from "react-native";
+import React, { useEffect } from "react";
+import { StyleSheet, ScrollView, View, TouchableOpacity, Alert } from "react-native";
 import { Text } from "@/components/Themed";
 import { transactions } from "@/constants/transactions";
-// Importa os novos componentes:
 import CategoryChart from "@/components/CategoryChart";
 import TransactionList from "@/components/TransactionList";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRouter } from "expo-router";
 
-export default function TabOneScreen() {
+export default function DashboardScreen() {
+  const router = useRouter();
+
+  // 🔐 Verifica se o usuário está logado
+  useEffect(() => {
+    async function checkLogin() {
+      const user = await AsyncStorage.getItem("@user");
+      if (!user) {
+        router.replace("/login"); // se não estiver logado, redireciona
+      }
+    }
+    checkLogin();
+  }, []);
+
+  // 🚪 Função de logout
+  async function handleLogout() {
+    await AsyncStorage.removeItem("@user");
+    Alert.alert("Logout", "Você saiu da sua conta.");
+    router.replace("/login");
+  }
+
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.title}>Dashboard</Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>Dashboard</Text>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <Text style={styles.logoutText}>Sair</Text>
+        </TouchableOpacity>
+      </View>
 
-      {/* 1. Componente do Gráfico */}
+      {/* 1. Gráfico de categorias */}
       <CategoryChart transactions={transactions} />
 
-      {/* 2. Componente da Lista de Transações */}
+      {/* 2. Lista de transações */}
       <TransactionList transactions={transactions} />
-      
     </ScrollView>
   );
 }
@@ -30,8 +53,24 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     backgroundColor: "#f5f5f5",
   },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
   title: {
     fontSize: 24,
+    fontWeight: "bold",
+  },
+  logoutButton: {
+    backgroundColor: "#ff3b30",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  logoutText: {
+    color: "#fff",
     fontWeight: "bold",
   },
 });
