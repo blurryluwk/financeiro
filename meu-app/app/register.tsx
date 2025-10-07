@@ -10,47 +10,59 @@ export default function RegisterScreen() {
   const [password, setPassword] = useState("");
 
   async function handleRegister() {
-
-    await AsyncStorage.setItem("@user", JSON.stringify({ name, email }));
-    router.push("/(tabs)");
-
     if (!name || !email || !password) {
       Alert.alert("Erro", "Preencha todos os campos!");
       return;
     }
 
-    // Aqui você poderia salvar no AsyncStorage ou enviar para sua API
-    console.log("Usuário cadastrado:", { name, email, password });
-    Alert.alert("Sucesso!", "Cadastro realizado com sucesso!");
+    try {
+      const storedUsers = await AsyncStorage.getItem("@users");
+      const users = storedUsers ? JSON.parse(storedUsers) : [];
 
-    router.push("/"); // volta para a tela inicial
+      // Verifica se o e-mail já existe
+      const userExists = users.some((user: any) => user.email === email);
+      if (userExists) {
+        Alert.alert("Erro", "E-mail já cadastrado!");
+        return;
+      }
+
+      const newUser = { name, email, password };
+      users.push(newUser);
+      await AsyncStorage.setItem("@users", JSON.stringify(users));
+
+      await AsyncStorage.setItem("@user", JSON.stringify(newUser)); // mantém logado
+
+      Alert.alert("Sucesso", "Cadastro realizado com sucesso!");
+      router.push("/(tabs)");
+    } catch (error) {
+      Alert.alert("Erro", "Não foi possível cadastrar o usuário.");
+      console.error(error);
+    }
   }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Criar Conta</Text>
+      <Text style={styles.title}>Criar conta</Text>
 
       <TextInput
         style={styles.input}
-        placeholder="Nome"
-        placeholderTextColor="#999"
+        placeholder="Digite seu nome..."
+        placeholderTextColor="rgba(0, 0, 0, 0.4)"
         value={name}
         onChangeText={setName}
       />
-
       <TextInput
         style={styles.input}
-        placeholder="E-mail"
-        placeholderTextColor="#999"
+        placeholder="Digite seu email..."
+        placeholderTextColor="rgba(0, 0, 0, 0.4)"
         keyboardType="email-address"
         value={email}
         onChangeText={setEmail}
       />
-
       <TextInput
         style={styles.input}
-        placeholder="Senha"
-        placeholderTextColor="#999"
+        placeholder="Digite uma senha..."
+        placeholderTextColor="rgba(0, 0, 0, 0.4)"
         secureTextEntry
         value={password}
         onChangeText={setPassword}
@@ -60,7 +72,7 @@ export default function RegisterScreen() {
         <Text style={styles.buttonText}>Cadastrar</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => router.push("/")}>
+      <TouchableOpacity onPress={() => router.push("/login")}>
         <Text style={styles.link}>Já tem uma conta? Entrar</Text>
       </TouchableOpacity>
     </View>
@@ -70,16 +82,15 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
-    alignItems: "center",
     justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
     padding: 20,
   },
   title: {
     fontSize: 26,
     fontWeight: "bold",
     marginBottom: 30,
-    color: "#333",
   },
   input: {
     width: "100%",
@@ -89,7 +100,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 12,
     marginBottom: 15,
-    fontSize: 16,
   },
   button: {
     backgroundColor: "#007AFF",

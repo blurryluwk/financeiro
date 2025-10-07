@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { StyleSheet, ScrollView, View, TouchableOpacity, Alert } from "react-native";
 import { Text } from "@/components/Themed";
 import { transactions } from "@/constants/transactions";
@@ -9,16 +9,23 @@ import { useRouter } from "expo-router";
 
 export default function DashboardScreen() {
   const router = useRouter();
+  const [userName, setUserName] = useState<string | null>(null);
 
-  // 🔐 Verifica se o usuário está logado
+  // 🔐 Verifica login e carrega nome do usuário
   useEffect(() => {
-    async function checkLogin() {
-      const user = await AsyncStorage.getItem("@user");
-      if (!user) {
-        router.replace("/login"); // se não estiver logado, redireciona
+    async function loadUser() {
+      const userData = await AsyncStorage.getItem("@user");
+
+      if (!userData) {
+        router.replace("/login");
+        return;
       }
+
+      const user = JSON.parse(userData);
+      setUserName(user.name || "Usuário");
     }
-    checkLogin();
+
+    loadUser();
   }, []);
 
   // 🚪 Função de logout
@@ -31,7 +38,10 @@ export default function DashboardScreen() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Dashboard</Text>
+        <Text style={styles.title}>
+          Dashboard de {userName ? userName : "..."}
+        </Text>
+
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Text style={styles.logoutText}>Sair</Text>
         </TouchableOpacity>
@@ -60,7 +70,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   title: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: "bold",
   },
   logoutButton: {

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -7,42 +7,62 @@ export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState(""); // 👈 estado para mensagens de erro
 
   async function handleLogin() {
-
-    await AsyncStorage.setItem("@user", JSON.stringify({ email }));
-    router.push("/(tabs)");
+    setError(""); // limpa mensagem anterior
 
     if (!email || !password) {
-      Alert.alert("Erro", "Preencha todos os campos!");
+      setError("Preencha todos os campos!");
       return;
     }
 
-    // Aqui futuramente você pode verificar no AsyncStorage ou na API
-    console.log("Usuário logado:", { email, password });
+    try {
+      const storedUsers = await AsyncStorage.getItem("@users");
+      const users = storedUsers ? JSON.parse(storedUsers) : [];
 
-    Alert.alert("Sucesso!", "Login realizado com sucesso!");
-    router.push("/(tabs)"); // redireciona pro layout principal (ou outra página)
-    
+      const user = users.find((u: any) => u.email === email);
+
+      if (!user) {
+        setError("Usuário inexistente! Crie uma conta.");
+        return;
+      }
+
+      if (user.password !== password) {
+        setError("Senha incorreta!");
+        return;
+      }
+
+      await AsyncStorage.setItem("@user", JSON.stringify(user));
+
+      router.replace("/(tabs)");
+    } catch (error) {
+      setError("Ocorreu um erro inesperado. Tente novamente.");
+      console.error(error);
+    }
   }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Entrar</Text>
+      <Text style={styles.title}>Fazer login</Text>
+
+      {/* 🟥 Mensagem de erro na tela */}
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
       <TextInput
         style={styles.input}
-        placeholder="E-mail"
-        placeholderTextColor="#999"
+        placeholder="Digite seu email..."
+        placeholderTextColor="rgba(0, 0, 0, 0.4)"
         keyboardType="email-address"
         value={email}
         onChangeText={setEmail}
+        autoCapitalize="none"
       />
 
       <TextInput
         style={styles.input}
-        placeholder="Senha"
-        placeholderTextColor="#999"
+        placeholder="Digite sua senha..."
+        placeholderTextColor="rgba(0, 0, 0, 0.4)"
         secureTextEntry
         value={password}
         onChangeText={setPassword}
@@ -62,16 +82,21 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
-    alignItems: "center",
     justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
     padding: 20,
   },
   title: {
     fontSize: 26,
     fontWeight: "bold",
-    marginBottom: 30,
-    color: "#333",
+    marginBottom: 20,
+  },
+  errorText: {
+    color: "#ff3b30",
+    marginBottom: 10,
+    fontWeight: "600",
+    textAlign: "center",
   },
   input: {
     width: "100%",
