@@ -1,13 +1,20 @@
-> Why do I have a folder named ".expo" in my project?
+# 💰 Luton Money
 
-The ".expo" folder is created when an Expo project is started using "expo start" command.
+**Luton Money** é um aplicativo de gestão monetária pessoal que ajuda você a controlar suas finanças, registrar suas receitas e despesas, e alcançar metas financeiras com mais clareza e disciplina.
 
-> What do the files contain?
+## ✨ Funcionalidades
 
-- "devices.json": contains information about devices that have recently opened this project. This is used to populate the "Development sessions" list in your development builds.
-- "settings.json": contains the server configuration that is used to serve the application manifest.
+- ✅ Cadastro e login de usuários
+- 💸 Adicionar receitas e despesas (transações)
+- 🎯 Definir e acompanhar metas financeiras
+- 📋 Visualizar histórico de transações
+- 🏠 Página inicial com atalhos rápidos para funcionalidades principais
 
-> Should I commit the ".expo" folder?
+## 📱 Sobre o Aplicativo
 
-No, you should not share the ".expo" folder. It does not contain any information that is relevant for other developers working on the project, it is specific to your machine.
-Upon project creation, the ".expo" folder is already added to your ".gitignore" file.
+Luton Money foi criado com o objetivo de facilitar o controle financeiro pessoal, oferecendo uma interface simples, intuitiva e visivelmente agradável. O aplicativo permite que você:
+
+- Mantenha o registro de todas as suas entradas e saídas de dinheiro.
+- Crie metas de economia, como "Guardar R$5.000 para uma viagem", tendo uma data-limite para cumprir a meta.
+- Acompanhe seu progresso financeiro em tempo real.
+
