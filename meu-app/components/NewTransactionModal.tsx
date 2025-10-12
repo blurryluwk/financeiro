@@ -1,46 +1,19 @@
-// /components/NewTransactionModal.tsx
+import React, { useEffect, useState } from "react";
+import {Modal,View,Text,TextInput,TouchableOpacity,StyleSheet,Pressable,Alert,ScrollView,ActivityIndicator} from "react-native";
+import { apiRequest } from "@/services/api";
 
-import React, { useState } from 'react';
-import {
-  Modal,
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Pressable,
-  Alert,
-  ScrollView, // Importar ScrollView
-} from 'react-native';
-
-// Importe o tipo restrito de categorias
-import { TransactionCategory } from '@/constants/transactions'; // Ajuste o caminho conforme necessário
-
-// Define os tipos restritos para o formulário
 export type NewTransactionData = {
   description: string;
   amount: number;
-  type: 'income' | 'expense';
-  category: TransactionCategory; // Usa o tipo restrito
-  date: string; 
+  type: "income" | "expense";
+  category: string; 
+  date: string;
 };
-
-// As categorias disponíveis para exibição nos botões
-const DEFAULT_CATEGORIES: TransactionCategory[] = [
-    'Alimentação',
-    'Mobilidade',
-    'Salário',
-    'Lazer',
-    'Outros',
-    // Adicione a categoria 'Outros' se for uma opção válida para o usuário
-];
 
 interface NewTransactionModalProps {
   isVisible: boolean;
   onClose: () => void;
-  onSave: (data: NewTransactionData) => void; 
-  // O array de categorias pode ser usado para customização, mas usaremos um padrão
-  availableCategories?: string[]; 
+  onSave?: (data: NewTransactionData) => void;
 }
 
 const NewTransactionModal: React.FC<NewTransactionModalProps> = ({
@@ -48,45 +21,40 @@ const NewTransactionModal: React.FC<NewTransactionModalProps> = ({
   onClose,
   onSave,
 }) => {
-  
-  // 1. Estados locais do formulário
-  const [description, setDescription] = useState('');
-  const [amount, setAmount] = useState('');
-  const [type, setType] = useState<'income' | 'expense'>('expense');
+  const [description, setDescription] = useState("");
+  const [amount, setAmount] = useState("");
+  const [type, setType] = useState<"income" | "expense">("expense");
+  const [category, setCategory] = useState<string>("");
+  const [categories, setCategories] = useState<string[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
 
-  // CORREÇÃO: Inicializa o estado com um valor garantido do tipo restrito
-  const [category, setCategory] = useState<TransactionCategory>(DEFAULT_CATEGORIES[0]); 
-  
-  const currentDate = new Date().toISOString().split('T')[0];
+  const currentDate = new Date().toISOString().split("T")[0];
 
-  // 2. Funções de Estilo para os Botões
-  
-  // Estilos para os botões de Tipo (income/expense)
-  const getTypeButtonStyle = (t: 'income' | 'expense') => ({
-    ...styles.typeButton,
-    backgroundColor: type === t ? (t === 'income' ? '#8fccb6ff' : '#de1d6aff') : '#eee',
-  });
-  const getTypeButtonTextStyle = (t: 'income' | 'expense') => ({
-    color: type === t ? '#fff' : '#333',
-    fontWeight: 'bold',
-  });
-  
-  // Estilos para os botões de Categoria
-  const getCategoryButtonStyle = (cat: TransactionCategory) => ({
-    ...styles.categoryButton,
-    backgroundColor: category === cat ? '#4695a0ff' : '#f0f0f0',
-  });
-  const getCategoryButtonTextStyle = (cat: TransactionCategory) => ({
-    color: category === cat ? '#fff' : '#333',
-    fontWeight: 'bold',
-  });
+  // 🔹 Buscar categorias do backend
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await apiRequest("/categories", "GET");
+        // Backend deve retornar [{ id, name }] ou ["Alimentação", "Lazer", ...]
+        const categoryNames = data.map((c: any) => c.name || c);
+        setCategories(categoryNames);
+        if (categoryNames.length > 0) setCategory(categoryNames[0]);
+      } catch (err) {
+        console.error("Erro ao buscar categorias:", err);
+        Alert.alert("Erro", "Não foi possível carregar as categorias.");
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
 
+    if (isVisible) fetchCategories();
+  }, [isVisible]);
 
-  const handleSave = () => {
-    const parsedAmount = parseFloat(amount.replace(',', '.'));
-
+  // 🔹 Enviar transação
+  const handleSave = async () => {
+    const parsedAmount = parseFloat(amount.replace(",", "."));
     if (!description || parsedAmount <= 0 || isNaN(parsedAmount)) {
-      Alert.alert('Erro', 'Preencha a descrição e um valor válido.');
+      Alert.alert("Erro", "Preencha a descrição e um valor válido.");
       return;
     }
 
@@ -98,58 +66,86 @@ const NewTransactionModal: React.FC<NewTransactionModalProps> = ({
       date: currentDate,
     };
 
-    onSave(newTransaction);
-    onClose();
+    try {
+      await apiRequest("/transactions", "POST", newTransaction);
+      Alert.alert("Sucesso", "Transação salva com sucesso!");
+      if (onSave) onSave(newTransaction);
+      onClose();
+    } catch (error) {
+      Alert.alert("Erro", "Não foi possível salvar a transação.");
+      console.error(error);
+    }
   };
 
   return (
-    <Modal
-      animationType="slide"
-      transparent={true}
-      visible={isVisible}
-      onRequestClose={onClose}
-    >
+    <Modal animationType="slide" transparent visible={isVisible}>
       <Pressable style={styles.overlay} onPress={onClose} />
       <View style={styles.centeredView}>
         <View style={styles.modalView}>
           <Text style={styles.modalTitle}>Nova Transação</Text>
 
-          {/* Tipo (Receita/Despesa) */}
+          {/* Tipo */}
           <Text style={styles.label}>Tipo:</Text>
           <View style={styles.typeContainer}>
-            <TouchableOpacity onPress={() => setType('expense')} style={getTypeButtonStyle('expense')}>
-              <Text>Despesa</Text>
+            <TouchableOpacity
+              onPress={() => setType("expense")}
+              style={[
+                styles.typeButton,
+                { backgroundColor: type === "expense" ? "#de1d6aff" : "#eee" },
+              ]}
+            >
+              <Text style={{ color: type === "expense" ? "#fff" : "#333" }}>
+                Despesa
+              </Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => setType('income')} style={getTypeButtonStyle('income')}>
-              <Text>Receita</Text>
+            <TouchableOpacity
+              onPress={() => setType("income")}
+              style={[
+                styles.typeButton,
+                { backgroundColor: type === "income" ? "#8fccb6ff" : "#eee" },
+              ]}
+            >
+              <Text style={{ color: type === "income" ? "#fff" : "#333" }}>
+                Receita
+              </Text>
             </TouchableOpacity>
           </View>
-          
-          {/* Categoria (AGORA COM BOTÕES ESTILO POPUP/SLIDER) */}
-          <Text style={styles.label}>Categoria:</Text>
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false} 
-            contentContainerStyle={styles.categoryScrollContainer}
-          >
-            {DEFAULT_CATEGORIES.map((cat) => (
-              <TouchableOpacity
-                key={cat}
-                // Garante que o tipo é o restrito
-                onPress={() => setCategory(cat)} 
-                style={getCategoryButtonStyle(cat)}
-              >
-                <Text>{cat}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
 
+          {/* Categoria */}
+          <Text style={styles.label}>Categoria:</Text>
+          {loadingCategories ? (
+            <ActivityIndicator size="small" color="#4695a0ff" />
+          ) : (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.categoryScrollContainer}
+            >
+              {categories.map((cat) => (
+                <TouchableOpacity
+                  key={cat}
+                  onPress={() => setCategory(cat)}
+                  style={[
+                    styles.categoryButton,
+                    {
+                      backgroundColor:
+                        category === cat ? "#4695a0ff" : "#f0f0f0",
+                    },
+                  ]}
+                >
+                  <Text style={{ color: category === cat ? "#fff" : "#333" }}>
+                    {cat}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
 
           {/* Descrição */}
           <Text style={styles.label}>Descrição:</Text>
           <TextInput
             style={styles.input}
-            placeholder="Ex: Aluguel, Salário, Café"
+            placeholder="Ex: Mercado, Salário..."
             value={description}
             onChangeText={setDescription}
           />
@@ -163,11 +159,10 @@ const NewTransactionModal: React.FC<NewTransactionModalProps> = ({
             value={amount}
             onChangeText={setAmount}
           />
-          
-          {/* Data */}
+
           <Text style={styles.dateText}>Data: {currentDate}</Text>
 
-          {/* Botões de Ação */}
+          {/* Botões */}
           <View style={styles.actionButtons}>
             <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
               <Text style={styles.cancelButtonText}>Cancelar</Text>

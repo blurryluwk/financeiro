@@ -1,17 +1,34 @@
-import React from "react";
-import { StyleSheet, Dimensions } from "react-native";
+import React, { useEffect, useState } from "react";
+import { StyleSheet, Dimensions, ActivityIndicator } from "react-native";
 import { PieChart } from "react-native-chart-kit";
-import { Text } from "@/components/Themed";
-import { Transaction } from "@/constants/transactions";
-
-interface CategoryChartProps {
-  transactions: Transaction[];
-}
+import { Text, View } from "@/components/Themed";
+import { Transaction } from "@/types/Transaction";
+import { apiRequest } from "@/services/api"; 
 
 const screenWidth = Dimensions.get("window").width;
 
-export default function CategoryChart({ transactions }: CategoryChartProps) {
-  // 1. Lógica para agrupar despesas por categoria
+export default function CategoryChart() {
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Buscar transações da API
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        const data = await apiRequest("/transactions");
+        setTransactions(data);
+      } catch (err: any) {
+        setError(err.message || "Erro desconhecido");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTransactions();
+  }, []);
+
+  // Agrupar despesas por categoria
   const categoryTotals: Record<string, number> = {};
   transactions.forEach((t) => {
     if (t.type === "expense") {
@@ -29,7 +46,7 @@ export default function CategoryChart({ transactions }: CategoryChartProps) {
     "#5f335fff",
   ];
 
-  // 2. Formato de dados para o gráfico
+  // Dados formatados para gráfico
   const chartData = Object.keys(categoryTotals).map((cat, i) => ({
     name: cat,
     amount: categoryTotals[cat],
@@ -38,7 +55,7 @@ export default function CategoryChart({ transactions }: CategoryChartProps) {
     legendFontSize: 14,
   }));
 
-  // 3. Configuração do gráfico
+  // Visual do gráfico
   const chartConfig = {
     backgroundColor: "#ffffff",
     backgroundGradientFrom: "#ffffff",
@@ -49,15 +66,18 @@ export default function CategoryChart({ transactions }: CategoryChartProps) {
     style: {
       borderRadius: 16,
     },
-    propsForDots: {
-      r: "6",
-      strokeWidth: "2",
-      stroke: "#ffa726",
-    },
   };
 
+  if (loading) {
+    return <ActivityIndicator size="large" style={{ marginTop: 30 }} />;
+  }
+
+  if (error) {
+    return <Text style={styles.noDataText}>Erro: {error}</Text>;
+  }
+
   return (
-    <>
+    <View>
       <Text style={styles.subtitle}>Gastos por categoria</Text>
       {chartData.length > 0 ? (
         <PieChart
@@ -73,7 +93,7 @@ export default function CategoryChart({ transactions }: CategoryChartProps) {
       ) : (
         <Text style={styles.noDataText}>Nenhum gasto registrado</Text>
       )}
-    </>
+    </View>
   );
 }
 

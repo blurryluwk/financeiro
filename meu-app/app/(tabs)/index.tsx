@@ -3,8 +3,8 @@
 import React from "react";
 import { StyleSheet, ScrollView } from "react-native";
 import { Text } from "@/components/Themed";
-import { transactions } from "@/constants/transactions";
-// Importa os novos componentes:
+
+import { Transaction } from "@/types/Transaction";
 import CategoryChart from "@/components/CategoryChart";
 import TransactionList from "@/components/TransactionList";
 

@@ -1,4 +1,3 @@
-// /components/Cards/TransactionCard.tsx
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
@@ -50,7 +49,7 @@ const styles = StyleSheet.create({
   },
   category: {
     fontSize: 14,
-    color: '#505050ff', // azul para destacar a categoria
+    color: '#505050ff', 
     marginTop: 2,
   },
   date: {
