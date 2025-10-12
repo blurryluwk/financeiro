@@ -19,6 +19,7 @@ export default function RegisterScreen() {
   const [loading, setLoading] = useState(false);
 
   async function handleRegister() {
+    console.log("Botão clicado");
     if (!name || !email || !password) {
       Alert.alert("Erro", "Preencha todos os campos!");
       return;

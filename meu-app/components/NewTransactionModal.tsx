@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from "react";
 import {
-  Modal,
   View,
   Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Pressable,
   Alert,
   ScrollView,
+  Modal,
+  Pressable,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { apiRequest } from "@/services/api"; 
 
 export type NewTransactionData = {
   description: string;
@@ -23,26 +25,39 @@ interface NewTransactionModalProps {
   isVisible: boolean;
   onClose: () => void;
   onSave: (data: NewTransactionData) => void;
-  availableCategories?: string[];
+  availableCategories?: string[]; 
 }
 
 const NewTransactionModal: React.FC<NewTransactionModalProps> = ({
   isVisible,
   onClose,
   onSave,
-  availableCategories = ["Outros"],
 }) => {
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [type, setType] = useState<"income" | "expense">("expense");
-  const [category, setCategory] = useState<string>(availableCategories[0]);
+  const [categories, setCategories] = useState<string[]>(["Outros"]);
+  const [category, setCategory] = useState("Outros");
 
-  const currentDate = new Date().toISOString().split("T")[0];
-
-  // Atualiza categoria padrão se as categories mudarem
   useEffect(() => {
-    if (availableCategories.length > 0) setCategory(availableCategories[0]);
-  }, [availableCategories]);
+    const loadCategories = async () => {
+      try {
+        const userJson = await AsyncStorage.getItem("@user");
+        if (!userJson) return;
+        const user = JSON.parse(userJson);
+
+        const data = await apiRequest(`/categories?userId=${user.id}`, "GET");
+        if (data.length > 0) {
+          setCategories(data.map((c: any) => c.name));
+          setCategory(data[0].name);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar categorias:", error);
+      }
+    };
+
+    loadCategories();
+  }, []);
 
   const handleSave = () => {
     const parsedAmount = parseFloat(amount.replace(",", "."));
@@ -62,6 +77,29 @@ const NewTransactionModal: React.FC<NewTransactionModalProps> = ({
     onSave(newTransaction);
     onClose();
   };
+
+  const currentDate = new Date().toISOString().split("T")[0];
+  // Buscar categorias do usuário no backend
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        // Supondo que você tem o usuário logado no AsyncStorage
+        const userJson = await AsyncStorage.getItem("@user");
+        if (!userJson) return;
+
+        const user = JSON.parse(userJson);
+        const data = await apiRequest(`/categories?userId=${user.id}`, "GET");
+        if (data.length > 0) {
+          setCategories(data.map((c: any) => c.name));
+          setCategory(data[0].name);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar categorias:", error);
+      }
+    }
+
+    fetchCategories();
+  }, []);
 
   return (
     <Modal animationType="slide" transparent visible={isVisible}>
@@ -104,7 +142,7 @@ const NewTransactionModal: React.FC<NewTransactionModalProps> = ({
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.categoryScrollContainer}
           >
-            {availableCategories.map((cat) => (
+            {categories.map((cat) => (
               <TouchableOpacity
                 key={cat}
                 onPress={() => setCategory(cat)}
