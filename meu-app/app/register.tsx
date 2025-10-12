@@ -1,13 +1,22 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+} from "react-native";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { apiRequest } from "@/services/api";
 
 export default function RegisterScreen() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   async function handleRegister() {
     if (!name || !email || !password) {
@@ -15,28 +24,29 @@ export default function RegisterScreen() {
       return;
     }
 
+    setLoading(true);
     try {
-      const storedUsers = await AsyncStorage.getItem("@users");
-      const users = storedUsers ? JSON.parse(storedUsers) : [];
+      const newUser = await apiRequest("/users", "POST", {
+        name,
+        email,
+        password,
+      });
 
-      // Verifica se o e-mail já existe
-      const userExists = users.some((user: any) => user.email === email);
-      if (userExists) {
-        Alert.alert("Erro", "E-mail já cadastrado!");
-        return;
-      }
+      // Salva usuário localmente
+      await AsyncStorage.setItem("@user", JSON.stringify(newUser));
 
-      const newUser = { name, email, password };
-      users.push(newUser);
-      await AsyncStorage.setItem("@users", JSON.stringify(users));
-
-      await AsyncStorage.setItem("@user", JSON.stringify(newUser)); // mantém logado
-
-      Alert.alert("Sucesso", "Cadastro realizado com sucesso!");
-      router.push("/(tabs)");
-    } catch (error) {
-      Alert.alert("Erro", "Não foi possível cadastrar o usuário.");
+      Alert.alert("Sucesso", "Cadastro realizado!", [
+        { text: "OK", onPress: () => router.replace("/(tabs)") },
+      ]);
+    } catch (error: any) {
       console.error(error);
+      if (error.message.includes("409")) {
+        Alert.alert("Erro", "E-mail já cadastrado!");
+      } else {
+        Alert.alert("Erro", "Não foi possível cadastrar o usuário.");
+      }
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -46,30 +56,37 @@ export default function RegisterScreen() {
 
       <TextInput
         style={styles.input}
-        placeholder="Digite seu nome..."
-        placeholderTextColor="rgba(0, 0, 0, 0.4)"
+        placeholder="Nome"
+        placeholderTextColor="rgba(0,0,0,0.4)"
         value={name}
         onChangeText={setName}
       />
       <TextInput
         style={styles.input}
-        placeholder="Digite seu email..."
-        placeholderTextColor="rgba(0, 0, 0, 0.4)"
+        placeholder="E-mail"
+        placeholderTextColor="rgba(0,0,0,0.4)"
         keyboardType="email-address"
+        autoCapitalize="none"
         value={email}
         onChangeText={setEmail}
       />
       <TextInput
         style={styles.input}
-        placeholder="Digite uma senha..."
-        placeholderTextColor="rgba(0, 0, 0, 0.4)"
+        placeholder="Senha"
+        placeholderTextColor="rgba(0,0,0,0.4)"
         secureTextEntry
         value={password}
         onChangeText={setPassword}
       />
 
-      <TouchableOpacity style={styles.button} onPress={handleRegister}>
-        <Text style={styles.buttonText}>Cadastrar</Text>
+      <TouchableOpacity
+        style={[styles.button, loading && { opacity: 0.7 }]}
+        onPress={handleRegister}
+        disabled={loading}
+      >
+        <Text style={styles.buttonText}>
+          {loading ? "Cadastrando..." : "Cadastrar"}
+        </Text>
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => router.push("/login")}>
@@ -87,11 +104,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     padding: 20,
   },
-  title: {
-    fontSize: 26,
-    fontWeight: "bold",
-    marginBottom: 30,
-  },
+  title: { fontSize: 26, fontWeight: "bold", marginBottom: 30 },
   input: {
     width: "100%",
     height: 50,
@@ -110,13 +123,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginTop: 10,
   },
-  buttonText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  link: {
-    marginTop: 20,
-    color: "#007AFF",
-  },
+  buttonText: { color: "#fff", fontSize: 18, fontWeight: "bold" },
+  link: { marginTop: 20, color: "#007AFF" },
 });

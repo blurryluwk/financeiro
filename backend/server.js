@@ -1,18 +1,14 @@
-require('dotenv').config(); 
+const express = require("express");
+const cors = require("cors");
+const transactionRoutes = require("./src/routes/transactionRoutes");
+const userRoutes = require("./src/routes/userRoutes");
 
-const express = require('express');
 const app = express();
-const transactionRoutes = require('./src/routes/transactionRoutes');
-
-// variáveis de ambiente 
-require('dotenv').config(); 
-
+app.use(cors());
 app.use(express.json());
 
-// add rotas ao Express
-app.use('/api/transactions', transactionRoutes);
+app.use("/api/transactions", transactionRoutes);
+app.use("/api/users", userRoutes);
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

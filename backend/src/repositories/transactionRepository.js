@@ -1,21 +1,33 @@
-const db = require('../../config/db'); 
+// src/repositories/transactionRepository.js
+let transactions = []; // banco temporário
 
-const findAll = async () => {
-    const result = await db.query('SELECT * FROM transactions ORDER BY date DESC');
-    return result.rows;
+const TransactionRepository = {
+  findAll: () => transactions,
+
+  findById: (id) => transactions.find(t => t.id === id),
+
+  create: ({ description, amount, type, category }) => {
+    const id = transactions.length + 1;
+    const newTransaction = { id, description, amount, type, category };
+    transactions.push(newTransaction);
+    return newTransaction;
+  },
+
+  update: (id, data) => {
+    const transaction = transactions.find(t => t.id === id);
+    if (!transaction) return null;
+
+    Object.assign(transaction, data);
+    return transaction;
+  },
+
+  delete: (id) => {
+    const index = transactions.findIndex(t => t.id === id);
+    if (index === -1) return false;
+
+    transactions.splice(index, 1);
+    return true;
+  },
 };
 
-const create = async (transaction) => {
-    const { amount, description, type, category } = transaction;
-    const result = await db.query(
-        'INSERT INTO transactions (amount, description, type, category) VALUES ($1, $2, $3, $4) RETURNING *',
-        [amount, description, type, category]
-    );
-    return result.rows[0];
-};
-
-const remove = async (id) => {
-    await db.query('DELETE FROM transactions WHERE id = $1', [id]);
-}
-
-module.exports = { findAll, create, remove };
+module.exports = TransactionRepository;

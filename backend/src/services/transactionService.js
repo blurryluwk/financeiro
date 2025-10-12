@@ -1,20 +1,33 @@
-const repository = require('../repositories/transactionRepository');
-const validator = require('../../utils/validator');
+// src/services/transactionService.js
+const TransactionRepository = require("../repositories/transactionRepository");
 
-const findAll = async () => {
-    // talvez filtrar ou calcular algo antes de retornar
-    return repository.findAll();
-};
+const TransactionService = {
+  list: () => TransactionRepository.findAll(),
 
-const create = async (data) => {
-    if (!validator.isValid(data)) {
-        throw new Error("Dados de transação inválidos.");
+  get: (id) => {
+    const transaction = TransactionRepository.findById(id);
+    if (!transaction) throw { status: 404, message: "Transação não encontrada" };
+    return transaction;
+  },
+
+  create: ({ description, amount, type, category }) => {
+    if (!description || !amount || !type || !category) {
+      throw { status: 400, message: "Preencha todos os campos" };
     }
-    return repository.create(data);
+    return TransactionRepository.create({ description, amount, type, category });
+  },
+
+  update: (id, data) => {
+    const updated = TransactionRepository.update(id, data);
+    if (!updated) throw { status: 404, message: "Transação não encontrada" };
+    return updated;
+  },
+
+  delete: (id) => {
+    const deleted = TransactionRepository.delete(id);
+    if (!deleted) throw { status: 404, message: "Transação não encontrada" };
+    return { message: "Transação removida com sucesso" };
+  },
 };
 
-const remove = async (id) => {
-    return repository.remove(id);
-}
-
-module.exports = { findAll, create, remove };
+module.exports = TransactionService;

@@ -1,75 +1,83 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+} from "react-native";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { apiRequest } from "@/services/api";
 
 export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState(""); // 👈 estado para mensagens de erro
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   async function handleLogin() {
-    setError(""); // limpa mensagem anterior
-
+    setError("");
     if (!email || !password) {
       setError("Preencha todos os campos!");
       return;
     }
 
+    setLoading(true);
     try {
-      const storedUsers = await AsyncStorage.getItem("@users");
-      const users = storedUsers ? JSON.parse(storedUsers) : [];
-
-      const user = users.find((u: any) => u.email === email);
-
-      if (!user) {
-        setError("Usuário inexistente! Crie uma conta.");
-        return;
-      }
-
-      if (user.password !== password) {
-        setError("Senha incorreta!");
-        return;
-      }
+      const user = await apiRequest("/users/login", "POST", {
+        email,
+        password,
+      });
 
       await AsyncStorage.setItem("@user", JSON.stringify(user));
-
       router.replace("/(tabs)");
-    } catch (error) {
-      setError("Ocorreu um erro inesperado. Tente novamente.");
+    } catch (error: any) {
       console.error(error);
+      setError(
+        error.message.includes("404")
+          ? "Usuário não encontrado"
+          : error.message.includes("401")
+          ? "Senha incorreta"
+          : "Erro ao fazer login"
+      );
+    } finally {
+      setLoading(false);
     }
   }
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Fazer login</Text>
-
-      {/* 🟥 Mensagem de erro na tela */}
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
       <TextInput
         style={styles.input}
-        placeholder="Digite seu email..."
-        placeholderTextColor="rgba(0, 0, 0, 0.4)"
+        placeholder="E-mail"
+        placeholderTextColor="rgba(0,0,0,0.4)"
         keyboardType="email-address"
+        autoCapitalize="none"
         value={email}
         onChangeText={setEmail}
-        autoCapitalize="none"
       />
-
       <TextInput
         style={styles.input}
-        placeholder="Digite sua senha..."
-        placeholderTextColor="rgba(0, 0, 0, 0.4)"
+        placeholder="Senha"
+        placeholderTextColor="rgba(0,0,0,0.4)"
         secureTextEntry
         value={password}
         onChangeText={setPassword}
       />
 
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Entrar</Text>
+      <TouchableOpacity
+        style={[styles.button, loading && { opacity: 0.7 }]}
+        onPress={handleLogin}
+        disabled={loading}
+      >
+        <Text style={styles.buttonText}>
+          {loading ? "Entrando..." : "Entrar"}
+        </Text>
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => router.push("/register")}>
@@ -87,11 +95,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     padding: 20,
   },
-  title: {
-    fontSize: 26,
-    fontWeight: "bold",
-    marginBottom: 20,
-  },
+  title: { fontSize: 26, fontWeight: "bold", marginBottom: 20 },
   errorText: {
     color: "#ff3b30",
     marginBottom: 10,
@@ -106,7 +110,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 12,
     marginBottom: 15,
-    fontSize: 16,
   },
   button: {
     backgroundColor: "#007AFF",
@@ -117,13 +120,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginTop: 10,
   },
-  buttonText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  link: {
-    marginTop: 20,
-    color: "#007AFF",
-  },
+  buttonText: { color: "#fff", fontSize: 18, fontWeight: "bold" },
+  link: { marginTop: 20, color: "#007AFF" },
 });

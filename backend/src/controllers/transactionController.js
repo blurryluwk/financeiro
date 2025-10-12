@@ -1,32 +1,51 @@
-const transactionService = require('../services/transactionService');
+// src/controllers/transactionController.js
+const TransactionService = require("../services/transactionService");
 
-const getAll = async (req, res) => {
+const TransactionController = {
+  list: (req, res) => {
     try {
-        const transactions = await transactionService.findAll();
-        res.status(200).json(transactions);
+      const transactions = TransactionService.list();
+      res.json(transactions);
     } catch (error) {
-        // Lógica de tratamento de erro
-        res.status(500).json({ error: error.message });
+      res.status(error.status || 500).json({ error: error.message || "Erro interno" });
     }
-};
-const create = async (req, res) => {
+  },
+
+  get: (req, res) => {
     try {
-        const newTransaction = await transactionService.create(req.body);
-        res.status(201).json(newTransaction);
+      const transaction = TransactionService.get(Number(req.params.id));
+      res.json(transaction);
     } catch (error) {
-        // Lógica de tratamento de erro
-        res.status(500).json({ error: error.message });
+      res.status(error.status || 500).json({ error: error.message || "Erro interno" });
     }
+  },
+
+  create: (req, res) => {
+    try {
+      const transaction = TransactionService.create(req.body);
+      res.status(201).json(transaction);
+    } catch (error) {
+      res.status(error.status || 500).json({ error: error.message || "Erro interno" });
+    }
+  },
+
+  update: (req, res) => {
+    try {
+      const transaction = TransactionService.update(Number(req.params.id), req.body);
+      res.json(transaction);
+    } catch (error) {
+      res.status(error.status || 500).json({ error: error.message || "Erro interno" });
+    }
+  },
+
+  delete: (req, res) => {
+    try {
+      const result = TransactionService.delete(Number(req.params.id));
+      res.json(result);
+    } catch (error) {
+      res.status(error.status || 500).json({ error: error.message || "Erro interno" });
+    }
+  },
 };
 
-const remove = async (req, res) => {
-    try {
-        const { id } = req.params;
-        await transactionService.remove(id);
-        res.status(204).send();
-    } catch (error) {
-        // Lógica de tratamento de erro
-        res.status(500).json({ error: error.message });
-    }
-};  
-module.exports = { getAll, create, remove };
+module.exports = TransactionController;

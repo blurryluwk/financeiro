@@ -1,4 +1,4 @@
-const BASE_URL = "https://localhost:3000/transactions";
+const BASE_URL = "http://localhost:3000/api";
 
 export async function apiRequest(
   endpoint: string,
