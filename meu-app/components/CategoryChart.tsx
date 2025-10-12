@@ -1,33 +1,17 @@
-import React, { useEffect, useState } from "react";
-import { StyleSheet, Dimensions, ActivityIndicator } from "react-native";
+// components/CategoryChart.tsx
+
+import React from "react";
+import { StyleSheet, Dimensions, View, Text } from "react-native";
 import { PieChart } from "react-native-chart-kit";
-import { Text, View } from "@/components/Themed";
 import { Transaction } from "@/types/Transaction";
-import { apiRequest } from "@/services/api"; 
 
 const screenWidth = Dimensions.get("window").width;
 
-export default function CategoryChart() {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+interface CategoryChartProps {
+  transactions: Transaction[];
+}
 
-  // Buscar transações da API
-  useEffect(() => {
-    const fetchTransactions = async () => {
-      try {
-        const data = await apiRequest("/transactions");
-        setTransactions(data);
-      } catch (err: any) {
-        setError(err.message || "Erro desconhecido");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTransactions();
-  }, []);
-
+export default function CategoryChart({ transactions }: CategoryChartProps) {
   // Agrupar despesas por categoria
   const categoryTotals: Record<string, number> = {};
   transactions.forEach((t) => {
@@ -55,27 +39,6 @@ export default function CategoryChart() {
     legendFontSize: 14,
   }));
 
-  // Visual do gráfico
-  const chartConfig = {
-    backgroundColor: "#ffffff",
-    backgroundGradientFrom: "#ffffff",
-    backgroundGradientTo: "#ffffff",
-    decimalPlaces: 2,
-    color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-    labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-    style: {
-      borderRadius: 16,
-    },
-  };
-
-  if (loading) {
-    return <ActivityIndicator size="large" style={{ marginTop: 30 }} />;
-  }
-
-  if (error) {
-    return <Text style={styles.noDataText}>Erro: {error}</Text>;
-  }
-
   return (
     <View>
       <Text style={styles.subtitle}>Gastos por categoria</Text>
@@ -96,6 +59,17 @@ export default function CategoryChart() {
     </View>
   );
 }
+
+// Configuração visual do gráfico
+const chartConfig = {
+  backgroundColor: "#ffffff",
+  backgroundGradientFrom: "#ffffff",
+  backgroundGradientTo: "#ffffff",
+  decimalPlaces: 2,
+  color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+  labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+  style: { borderRadius: 16 },
+};
 
 const styles = StyleSheet.create({
   subtitle: {

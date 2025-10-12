@@ -1,0 +1,20 @@
+const { validationResult } = require('express-validator');
+
+const validate = (req, res, next) => {
+    const errors = validationResult(req);
+
+    // Se a lista de erros não estiver vazia, retorna 400
+    if (!errors.isEmpty()) {
+        return res.status(400).json({
+            success: false,
+            message: 'Erro de validação nos dados fornecidos.',
+            errors: errors.array({ onlyFirstError: true }) // Retorna apenas o primeiro erro para cada campo
+        });
+    }
+    // Se não houver erros, passa para o próximo middleware/controller
+    next();
+};
+
+module.exports = {
+    validate
+};

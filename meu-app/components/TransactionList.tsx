@@ -1,23 +1,30 @@
 // components/TransactionList.tsx
 
 import React from "react";
-import { StyleSheet } from "react-native";
-import { Text } from "@/components/Themed";
+import { StyleSheet, View, Text } from "react-native";
 import TransactionCard from "@/components/TransactionCard";
-import { Transaction } from "@/constants/transactions";
+import { Transaction } from "@/types/Transaction";
 
 interface TransactionListProps {
   transactions: Transaction[];
 }
 
 export default function TransactionList({ transactions }: TransactionListProps) {
+  if (!transactions || transactions.length === 0) {
+    return <Text style={styles.emptyText}>Nenhuma transação encontrada.</Text>;
+  }
+
   return (
-    <>
+    <View>
       <Text style={styles.subtitle}>Transações recentes</Text>
-      {transactions.map((t: Transaction, i: number) => (
-        <TransactionCard key={i} {...t} />
+      {transactions.map((t) => (
+        <TransactionCard
+          key={t.id}
+          {...t}
+          description={t.description || "Sem descrição"} // garante tipagem segura
+        />
       ))}
-    </>
+    </View>
   );
 }
 
@@ -26,6 +33,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     marginVertical: 10,
-    marginTop: 20, // Mantido o espaçamento extra para seguir o layout original
+    marginTop: 20,
+  },
+  emptyText: {
+    textAlign: "center",
+    marginTop: 20,
+    color: "#777",
   },
 });

@@ -1,107 +1,152 @@
-import React, { useState, useMemo } from "react";
-// Importe Alert do react-native
-import { StyleSheet, FlatList, TouchableOpacity, Alert } from "react-native";
-import { Text, View } from "@/components/Themed";
+import React, { useState, useEffect, useMemo } from "react";
+import {
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+  View,
+  Text,
+} from "react-native";
 
 import TransactionCard from "@/components/TransactionCard";
-import { TransactionCategory } from '@/constants/transactions';
-import {
-  transactions as initialTransactions,
-  Transaction,
-} from "@/constants/transactions";
 import FilterModal from "@/components/FilterModal";
-import { FilterState } from "@/components/TransactionFilter";
 import NewTransactionModal, {
   NewTransactionData,
 } from "@/components/NewTransactionModal";
+import { FilterState } from "@/components/TransactionFilter";
+import { apiRequest } from "@/services/api";
+import { Transaction } from "@/types/Transaction";
 
 export default function TabOneScreen() {
-  const [currentTransactions, setCurrentTransactions] =
-    useState(initialTransactions); // gerenciamento dos filtros aplicados
-
+  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
+  const [currentTransactions, setCurrentTransactions] = useState<Transaction[]>(
+    []
+  );
   const [filter, setFilter] = useState<FilterState>({
     type: "all",
     category: "all",
   });
-
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
   const [isNewTransactionModalVisible, setIsNewTransactionModalVisible] =
-    useState(false); // aplicar as seleções
+    useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleApplyFilter = (newFilter: FilterState) => {
-    setFilter(newFilter);
+  // 🔹 Buscar categorias
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const data: { name: string }[] = await apiRequest("/categories");
+        setAvailableCategories(data.map((c) => c.name));
+      } catch (err) {
+        console.error("Erro ao buscar categorias:", err);
+        setAvailableCategories(["Outros"]);
+      }
+    };
+    loadCategories();
+  }, []);
+
+  // 🔹 Buscar transações
+  const loadTransactions = async () => {
+    try {
+      setLoading(true);
+      const data: Transaction[] = await apiRequest("/transactions");
+      setCurrentTransactions(data);
+      setError(null);
+    } catch (err) {
+      console.error("Erro ao buscar transações:", err);
+      setError("Não foi possível carregar as transações.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const availableCategories = useMemo(() => {
-    // currentTransactions para coletar categorias
-    const allCategories = currentTransactions
-      .map((t) => t.category)
-      .filter(
-        (value, index, self) => self.indexOf(value) === index && value
-      ) as string[];
+  useEffect(() => {
+    loadTransactions();
+  }, []);
 
-    return allCategories.sort();
-  }, [currentTransactions]); // CORREÇÃO: Adiciona currentTransactions às dependências // recalcula a lista de transações a ser exibida
+  // 🔹 Aplicar filtro
+  const handleApplyFilter = (newFilter: FilterState) => {
+    setFilter(newFilter);
+    setIsFilterModalVisible(false);
+  };
 
+  // 🔹 Lista filtrada
   const filteredTransactions = useMemo(() => {
-    // CORREÇÃO: Filtra a lista currentTransactions
-    return currentTransactions.filter((t: Transaction) => {
+    return currentTransactions.filter((t) => {
       const typeMatch = filter.type === "all" || t.type === filter.type;
       const categoryMatch =
         filter.category === "all" || t.category === filter.category;
-
       return typeMatch && categoryMatch;
     });
-  }, [currentTransactions, filter]); // CORREÇÃO: Adiciona currentTransactions às dependências
+  }, [currentTransactions, filter]);
 
+  // 🔹 Adicionar nova transação
   const handleSaveNewTransaction = (data: NewTransactionData) => {
-    // cria a nova transação
     const newTransaction: Transaction = {
       ...data,
-      date: new Date().toLocaleDateString("pt-BR"), // DD/MM/YYYY
-    }; // adiciona a nova transação ao topo da lista
-
-    setCurrentTransactions((prevTransactions) => [
-      newTransaction,
-      ...prevTransactions,
-    ]);
-
+      id: Date.now(), // ID temporário (backend deve retornar real)
+    };
+    setCurrentTransactions((prev) => [newTransaction, ...prev]);
     Alert.alert(
       "Sucesso!",
-      `Transação de R$ ${newTransaction.amount.toFixed(2)} salva.`, // fecha o modal
+      `Transação de R$ ${newTransaction.amount.toFixed(2)} salva.`,
       [{ text: "OK", onPress: () => setIsNewTransactionModalVisible(false) }]
     );
   };
 
+  if (loading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color="#4695a0ff" />
+        <Text>Carregando transações...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity
+          style={styles.reloadButton}
+          onPress={loadTransactions}
+        >
+          <Text style={styles.reloadText}>Tentar novamente</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      {/* Container que alinha Título e Botão */}
+      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Transações</Text>
         <View style={styles.headerButtons}>
-          {/* CORREÇÃO: Adicionado Botão de Nova Transação */}
           <TouchableOpacity
             style={styles.newButton}
             onPress={() => setIsNewTransactionModalVisible(true)}
           >
             <Text style={styles.newButtonText}>+</Text>
           </TouchableOpacity>
-
-          {/* Botão para abrir o Modal de Filtro */}
           <TouchableOpacity
             style={styles.filterButton}
-            onPress={() => setIsModalVisible(true)}
+            onPress={() => setIsFilterModalVisible(true)}
           >
             <Text style={styles.filterButtonText}>Filtrar</Text>
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Lista de transações */}
       <FlatList
-        data={filteredTransactions} // Usa a lista FILTRADA
-        keyExtractor={(item, index) => index.toString()}
+        data={filteredTransactions}
+        keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <TransactionCard
-            description={item.description}
+            description={item.description || "Sem descrição"}
             amount={item.amount}
             date={item.date}
             type={item.type}
@@ -112,18 +157,20 @@ export default function TabOneScreen() {
         contentContainerStyle={{ paddingBottom: 20 }}
         ListEmptyComponent={() => (
           <Text style={styles.emptyText}>
-            Nenhuma transação encontrada com os filtros atuais.{" "}
+            Nenhuma transação encontrada com os filtros atuais.
           </Text>
         )}
       />
-      {/* Modal de Filtro */}{" "}
+
+      {/* Modais */}
       <FilterModal
-        isVisible={isModalVisible}
-        onClose={() => setIsModalVisible(false)}
+        isVisible={isFilterModalVisible}
+        onClose={() => setIsFilterModalVisible(false)}
         currentFilter={filter}
         onApply={handleApplyFilter}
         availableCategories={availableCategories}
       />
+
       <NewTransactionModal
         isVisible={isNewTransactionModalVisible}
         onClose={() => setIsNewTransactionModalVisible(false)}
@@ -147,31 +194,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 15,
   },
-  headerButtons: {
-    // CORREÇÃO: Novo estilo para agrupar os botões
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: "bold",
-  },
+  headerButtons: { flexDirection: "row", alignItems: "center" },
+  title: { fontSize: 22, fontWeight: "bold" },
   filterButton: {
     paddingHorizontal: 15,
     paddingVertical: 8,
-    backgroundColor: "#4695a0ff", // Cor de destaque para o botão
+    backgroundColor: "#4695a0ff",
     borderRadius: 8,
   },
-  filterButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-  },
+  filterButtonText: { color: "#fff", fontWeight: "bold" },
   newButton: {
     paddingHorizontal: 15,
     paddingVertical: 5,
     backgroundColor: "#8fccb6ff",
     borderRadius: 8,
-    marginRight: 10, // Ajuste fino para centralizar o '+'
+    marginRight: 10,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -181,13 +218,25 @@ const styles = StyleSheet.create({
     fontSize: 24,
     lineHeight: 28,
   },
-  list: {
-    flex: 1,
-  },
+  list: { flex: 1 },
   emptyText: {
     textAlign: "center",
     marginTop: 50,
     fontSize: 16,
     color: "#666",
   },
+  centered: { flex: 1, justifyContent: "center", alignItems: "center" },
+  errorText: {
+    color: "red",
+    fontSize: 16,
+    textAlign: "center",
+    marginBottom: 10,
+  },
+  reloadButton: {
+    backgroundColor: "#4695a0ff",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  reloadText: { color: "#fff", fontWeight: "600" },
 });
