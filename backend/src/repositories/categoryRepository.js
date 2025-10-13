@@ -1,24 +1,57 @@
-// src/repositories/categoryRepository.js
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
 
-let categories = []; // banco temporário em memória
-let currentId = 1;
-
-const findAll = () => {
-  return categories;   
+export async function findAll(userId) {
+  if (!userId) throw new Error("userId é obrigatório");
+  return await prisma.transaction.findMany({
+    where: { user_id: userId },
+    include: { category: true },
+  });
 }
 
-const findById = (id) => {
-  return categories.find(c => c.id === parseInt(id));
+export async function findById(id) {
+  if (!id) throw new Error("id é obrigatório");
+  return await prisma.transaction.findUnique({
+    where: { id },
+    include: { category: true },
+  });
 }
 
-const create = ({ name }) => {
-  const newCategory = { id: currentId++, name };
-  categories.push(newCategory);
-  return newCategory;
+export async function create({ description, amount, type, categoryId, userId, date }) {
+  if (!description || !amount || !type || !categoryId || !userId || !date) {
+    throw new Error("Preencha todos os campos");
+  }
+
+  return await prisma.transaction.create({
+    data: {
+      description,
+      amount,
+      type,
+      category_id: categoryId,
+      user_id: userId,
+      date,
+    },
+    include: { category: true },
+  });
 }
 
-const findByUserId = (userId) => {
-  return categories.filter(c => c.userId === userId);
+export async function update(id, data) {
+  try {
+    return await prisma.transaction.update({
+      where: { id },
+      data,
+      include: { category: true },
+    });
+  } catch (err) {
+    return null;
+  }
 }
 
-module.exports = { findAll, findById, create, findByUserId };
+export async function deleteById(id) {
+  try {
+    await prisma.transaction.delete({ where: { id } });
+    return true;
+  } catch (err) {
+    return false;
+  }
+}

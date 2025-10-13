@@ -1,52 +1,58 @@
-const CategoryService = require("../services/categoryService");
+import CategoryService from "../services/categoryService.js";
 
 const CategoryController = {
-  list: (req, res) => {
+  list: async (req, res) => {
     try {
       const userId = Number(req.query.userId);
-      const categories = CategoryService.list(userId);
+      if (isNaN(userId)) throw { status: 400, message: "userId inválido" };
+
+      const categories = await CategoryService.list(userId);
       res.json(categories);
     } catch (error) {
+      console.error(error);
       res.status(error.status || 500).json({ error: error.message || "Erro interno" });
     }
   },
 
-  get: (req, res) => {
+  get: async (req, res) => {
     try {
-      const category = CategoryService.get(Number(req.params.id));
+      const category = await CategoryService.get(Number(req.params.id));
       res.json(category);
     } catch (error) {
+      console.error(error);
       res.status(error.status || 500).json({ error: error.message || "Erro interno" });
     }
   },
 
-  create: (req, res) => {
+  create: async (req, res) => {
     try {
-      const { name, userId } = req.body;
-      const category = CategoryService.create({ name, userId });
+      const category = await CategoryService.create(req.body);
       res.status(201).json(category);
     } catch (error) {
+      console.error(error);
       res.status(error.status || 500).json({ error: error.message || "Erro interno" });
     }
   },
 
-  update: (req, res) => {
+  update: async (req, res) => {
     try {
-      const category = CategoryService.update(Number(req.params.id), req.body);
+      const category = await CategoryService.update(Number(req.params.id), req.body);
       res.json(category);
     } catch (error) {
+      console.error(error);
       res.status(error.status || 500).json({ error: error.message || "Erro interno" });
     }
   },
 
-  delete: (req, res) => {
+  delete: async (req, res) => {
     try {
-      const result = CategoryService.delete(Number(req.params.id));
+      const result = await CategoryService.delete(Number(req.params.id));
       res.json(result);
     } catch (error) {
+      console.error(error);
       res.status(error.status || 500).json({ error: error.message || "Erro interno" });
     }
   },
 };
 
-module.exports = CategoryController;
+export default CategoryController;

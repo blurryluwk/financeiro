@@ -1,10 +1,11 @@
-const express = require("express");
-const cors = require("cors");
-const transactionRoutes = require("./src/routes/transactionRoutes");
-const userRoutes = require("./src/routes/userRoutes");
-const categoryRoutes = require("./src/routes/categoryRoutes");
+import express from "express";
+import cors from "cors";
+import transactionRoutes from "./src/routes/transactionRoutes.js";
+import userRoutes from "./src/routes/userRoutes.js";
+import categoryRoutes from "./src/routes/categoryRoutes.js";
 
 const app = express();
+
 app.use(cors());
 app.use(express.json());
 

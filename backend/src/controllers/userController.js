@@ -1,11 +1,11 @@
-const UserService = require("../services/userService");
+import UserService from "../services/userService.js";
 
 const UserController = {
   register: async (req, res) => {
     try {
-      // UserService.register deve ser assíncrono
       const newUser = await UserService.register(req.body);
 
+      // Criar categorias padrão
       if (newUser && newUser.id) {
         await UserService.createDefaultCategories(newUser.id);
       }
@@ -42,4 +42,4 @@ const UserController = {
   },
 };
 
-module.exports = UserController;
+export default UserController;

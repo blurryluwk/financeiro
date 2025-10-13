@@ -1,9 +1,15 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import React from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+} from "react-native";
 
 // Define o formato do objeto de filtro que a tela principal usará
 export interface FilterState {
-  type: 'all' | 'income' | 'expense';
+  type: "all" | "income" | "expense";
   category: string; // 'all' para mostrar todas as categorias
 }
 
@@ -11,31 +17,31 @@ interface TransactionFilterProps {
   filter: FilterState;
   onFilterChange: (newFilter: Partial<FilterState>) => void;
   // Recebe a lista de categorias disponíveis para criar os botões
-  availableCategories: string[]; 
+  availableCategories: string[];
 }
 
-const TransactionFilter: React.FC<TransactionFilterProps> = ({ 
-  filter, 
-  onFilterChange, 
-  availableCategories 
+const TransactionFilter: React.FC<TransactionFilterProps> = ({
+  filter,
+  onFilterChange,
+  availableCategories,
 }) => {
   const { type, category } = filter;
   const types = [
-    { label: 'Todas', value: 'all' },
-    { label: 'Receitas', value: 'income' },
-    { label: 'Despesas', value: 'expense' },
+    { label: "Todas", value: "all" },
+    { label: "Receitas", value: "income" },
+    { label: "Despesas", value: "expense" },
   ];
-  
-  const categories = ['Todas', ...availableCategories];
+
+  const categories = ["Todas", ...availableCategories];
 
   const getStyle = (isActive: boolean) => ({
     ...styles.button,
-    backgroundColor: isActive ? '#4695a0ff' : '#eee', // Cor de destaque
+    backgroundColor: isActive ? "#4695a0ff" : "#eee", // Cor de destaque
   });
 
   const getTextStyle = (isActive: boolean) => ({
     ...styles.buttonText,
-    color: isActive ? '#fff' : '#333',
+    color: isActive ? "#fff" : "#333",
   });
 
   return (
@@ -47,7 +53,9 @@ const TransactionFilter: React.FC<TransactionFilterProps> = ({
           <TouchableOpacity
             key={t.value}
             style={getStyle(type === t.value)}
-            onPress={() => onFilterChange({ type: t.value as 'all' | 'income' | 'expense' })}
+            onPress={() =>
+              onFilterChange({ type: t.value as "all" | "income" | "expense" })
+            }
           >
             <Text style={getTextStyle(type === t.value)}>{t.label}</Text>
           </TouchableOpacity>
@@ -56,12 +64,18 @@ const TransactionFilter: React.FC<TransactionFilterProps> = ({
 
       {/* Filtro por Categoria */}
       <Text style={styles.label}>Categoria:</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryContainer}>
-        {categories.map((cat) => (
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.categoryContainer}
+      >
+        {categories.map((cat, index) => (
           <TouchableOpacity
-            key={cat}
+            key={`${cat}-${index}`} // ✅ chave única
             style={getStyle(category === cat)}
-            onPress={() => onFilterChange({ category: cat === 'Todas' ? 'all' : cat })}
+            onPress={() =>
+              onFilterChange({ category: cat === "Todas" ? "all" : cat })
+            }
           >
             <Text style={getTextStyle(category === cat)}>{cat}</Text>
           </TouchableOpacity>
@@ -75,24 +89,24 @@ const styles = StyleSheet.create({
   container: {
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
+    borderBottomColor: "#ddd",
     marginBottom: 10,
   },
   label: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     marginTop: 10,
     marginBottom: 5,
-    color: '#333',
+    color: "#333",
   },
   typeContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 10,
   },
   categoryContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingRight: 15, // Espaço extra no final para rolar
   },
   button: {
@@ -103,7 +117,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });
 

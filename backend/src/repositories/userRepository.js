@@ -1,17 +1,23 @@
-let users = []; // "banco de dados" temporário
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
 
-const findAll = () => {
-  return users;
+export async function create({ name, email, password_hash }) {
+  return await prisma.user.create({
+    data: {
+      name,
+      email,
+      password_hash, 
+    },
+  });
 }
 
-const findByEmail = (email) => {
-  return users.find(u => u.email === email);
+export async function findByEmail(email) {
+  return await prisma.user.findUnique({
+    where: { email },
+  });
 }
 
-const create = ({ name, email, password }) => {
-  const newUser = { id: users.length + 1, name, email, password };
-  users.push(newUser);
-  return newUser;
+export async function findAll() {
+  return await prisma.user.findMany();
 }
 
-module.exports = { findAll, findByEmail, create };
