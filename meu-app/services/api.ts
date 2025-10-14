@@ -1,20 +1,18 @@
 import { getToken } from "./auth";
 
-const API_BASE_URL = "http://localhost:3000/api"; // ajuste conforme seu backend
+const API_BASE_URL = "http://192.168.1.119:3000/api"; // ajuste conforme seu backend
 
 export async function apiRequest(
   endpoint: string,
   method: "GET" | "POST" | "PUT" | "DELETE" = "GET",
   body?: any,
-  token?: string
+  tokenParam?: string
 ) {
   try {
     const url = `${API_BASE_URL}${endpoint}`;
 
-    // Pega token do storage se não passou
-    if (!token) {
-      token = (await getToken()) || undefined;
-    }
+    // Se não foi passado token, busca do SecureStore
+    const token = tokenParam || (await getToken());
 
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
@@ -30,7 +28,13 @@ export async function apiRequest(
       body: body ? JSON.stringify(body) : undefined,
     });
 
-    const data = await response.json();
+    // Pode haver respostas sem JSON (ex: 204 No Content)
+    let data: any = null;
+    try {
+      data = await response.json();
+    } catch {
+      data = null;
+    }
 
     if (!response.ok) {
       throw new Error(data?.error || `Erro ${response.status}`);

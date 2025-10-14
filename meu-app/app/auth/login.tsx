@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { login } from "@/services/auth";
@@ -20,29 +19,48 @@ export default function LoginScreen() {
 
   async function handleLogin() {
     setError("");
+
     if (!email || !password) {
       setError("Preencha todos os campos!");
       return;
     }
 
     setLoading(true);
+
     try {
+      // 👇 Log dos dados que estão sendo enviados
+      console.log("📤 Enviando dados de login:", { email, password });
+
       const user = await login(email, password);
 
+      // 👇 Log do retorno completo
+      console.log("✅ Resposta do backend:", user);
+
       if (!user?.id) {
+        console.warn("⚠️ Usuário retornado inválido:", user);
         setError("Usuário inválido. Contate o suporte.");
         return;
       }
 
+      console.log("🎉 Login bem-sucedido! Redirecionando...");
       router.replace("/(tabs)");
     } catch (err: any) {
-      console.error("Erro ao fazer login:", err);
+      console.error("❌ Erro ao fazer login:", err);
+
+      // 👇 Log completo do erro (mensagem e stack se houver)
+      console.log("🧩 Detalhes do erro:", {
+        message: err.message,
+        stack: err.stack,
+      });
+
       setError(
         err.message.includes("401")
           ? "E-mail ou senha incorretos"
           : err.message.includes("404")
-          ? "Usuário não encontrado"
-          : "Erro ao fazer login"
+            ? "Usuário não encontrado"
+            : err.message.includes("Network")
+              ? "Falha de conexão com o servidor"
+              : err.message || "Erro ao fazer login"
       );
     } finally {
       setLoading(false);

@@ -2,24 +2,10 @@
 import * as SecureStore from "expo-secure-store";
 import { apiRequest } from "./api";
 
-// -------------------------
-// Storage wrapper usando apenas SecureStore
-// -------------------------
-const storage = {
-  setItem: async (key: string, value: string) => {
-    await SecureStore.setItemAsync(key, value);
-  },
-  getItem: async (key: string) => {
-    return await SecureStore.getItemAsync(key);
-  },
-  removeItem: async (key: string) => {
-    await SecureStore.deleteItemAsync(key);
-  },
-};
+const TOKEN_KEY = "token";
+const USER_KEY = "user";
 
-// -------------------------
-// Login
-// -------------------------
+// 🔹 LOGIN
 export async function login(email: string, password: string) {
   const response = await apiRequest("/users/login", "POST", { email, password });
 
@@ -27,67 +13,81 @@ export async function login(email: string, password: string) {
     throw new Error("Resposta inválida do servidor");
   }
 
-  await storage.setItem("token", response.token);
-  await storage.setItem("user", JSON.stringify(response.user));
+  await Promise.all([
+    SecureStore.setItemAsync(TOKEN_KEY, response.token),
+    SecureStore.setItemAsync(USER_KEY, JSON.stringify(response.user)),
+  ]);
 
   return response.user;
 }
 
-// -------------------------
-// Registro
-// -------------------------
-export async function registerUser(name: string, email: string, password: string) {
-  const response = await apiRequest("/users/register", "POST", { name, email, password });
+// 🔹 LOGOUT
+export async function logout() {
+  await Promise.all([
+    SecureStore.deleteItemAsync(TOKEN_KEY),
+    SecureStore.deleteItemAsync(USER_KEY),
+  ]);
+}
+
+// 🔹 PEGAR TOKEN
+export async function getToken() {
+  try {
+    return await SecureStore.getItemAsync(TOKEN_KEY);
+  } catch (err) {
+    console.error("Erro ao obter token:", err);
+    return null;
+  }
+}
+
+// 🔹 PEGAR USUÁRIO
+export async function getUser() {
+  try {
+    const storedUser = await SecureStore.getItemAsync(USER_KEY);
+    if (!storedUser) return null;
+    return JSON.parse(storedUser);
+  } catch (err) {
+    console.error("Erro ao obter usuário:", err);
+    return null;
+  }
+}
+
+// 🔹 REGISTRO DE USUÁRIO
+export async function registerUser(data: {
+  name: string;
+  email: string;
+  password: string;
+}) {
+  const response = await apiRequest("/users/register", "POST", data);
 
   if (!response?.token || !response?.user) {
-    throw new Error("Resposta inválida do servidor");
+    throw new Error("Resposta inválida do servidor ao registrar");
   }
 
-  await storage.setItem("token", response.token);
-  await storage.setItem("user", JSON.stringify(response.user));
+  await Promise.all([
+    SecureStore.setItemAsync(TOKEN_KEY, response.token),
+    SecureStore.setItemAsync(USER_KEY, JSON.stringify(response.user)),
+  ]);
 
   return response.user;
 }
 
-// -------------------------
-// Logout
-// -------------------------
-export async function logout() {
-  await storage.removeItem("token");
-  await storage.removeItem("user");
-}
-
-// -------------------------
-// Pegar token ou usuário
-// -------------------------
-export async function getToken(): Promise<string | undefined> {
-  const token = await storage.getItem("token");
-  return token || undefined;
-}
-
-export async function getUser(): Promise<{ id: number; name: string; email: string } | null> {
-  const user = await storage.getItem("user");
-  return user ? JSON.parse(user) : null;
-}
-
-// -------------------------
-// Requisição autenticada
-// -------------------------
+// 🔹 REQUISIÇÃO AUTENTICADA
 export async function authRequest(
   endpoint: string,
   method: "GET" | "POST" | "PUT" | "DELETE" = "GET",
   body?: any
 ) {
-  const token = await getToken();
-  if (!token) throw new Error("Usuário não autenticado");
+  try {
+    const token = await getToken();
 
-  return await apiRequest(endpoint, method, body, token); // apiRequest deve aceitar token
-}
+    if (!token) {
+      throw new Error("Token não encontrado. Usuário não autenticado.");
+    }
 
-// -------------------------
-// Verifica autenticação
-// -------------------------
-export async function isAuthenticated(): Promise<boolean> {
-  const token = await getToken();
-  return !!token;
+    // Faz requisição usando o token
+    return await apiRequest(endpoint, method, body, token);
+  } catch (err) {
+    console.error("Erro no authRequest:", err);
+    throw err;
+  }
 }

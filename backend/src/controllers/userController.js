@@ -6,19 +6,28 @@ const UserController = {
     try {
       const newUser = await UserService.register(req.body);
 
-      // Criar categorias padrão
-      if (newUser && newUser.id) {
-        await UserService.createDefaultCategories(newUser.id);
+      if (!newUser || !newUser.id) {
+        return res.status(400).json({ error: "Falha ao criar usuário" });
       }
 
-      // Criar token JWT
+      // Cria categorias padrão
+      await UserService.createDefaultCategories(newUser.id);
+
+      // Cria token JWT
       const token = jwt.sign(
         { id: newUser.id, email: newUser.email },
         process.env.JWT_SECRET || "default_secret",
         { expiresIn: "7d" }
       );
 
-      return res.status(201).json({ user: newUser, token });
+      // Retorna apenas dados seguros
+      const safeUser = {
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email,
+      };
+
+      return res.status(201).json({ user: safeUser, token });
     } catch (error) {
       console.error(error);
       return res
@@ -28,25 +37,24 @@ const UserController = {
   },
 
   login: async (req, res) => {
-    try {
-      const user = await UserService.login(req.body);
+  try {
+    console.log("📩 BODY recebido:", req.body);
+    const { user, token } = await UserService.login(req.body);
+    console.log("✅ Retorno do UserService:", user, token);
 
-      // criar token JWT
-      const token = jwt.sign(
-        { id: user.id, email: user.email },
-        process.env.JWT_SECRET || "default_secret",
-        { expiresIn: "7d" }
-      );
-
-      // ⚠ retorna diretamente user + token
-      return res.json({ user, token });
-    } catch (error) {
-      console.error(error);
-      return res
-        .status(error.status || 500)
-        .json({ error: error.message || "Erro interno" });
+    if (!user || !user.id) {
+      console.log("⚠️ Usuário inválido no retorno:", user);
+      return res.status(401).json({ error: "Credenciais inválidas" });
     }
-  },
+
+    return res.json({ user, token });
+  } catch (error) {
+    console.error("🔥 Erro no login:", error);
+    return res
+      .status(error.status || 500)
+      .json({ error: error.message || "Erro interno" });
+  }
+},
 
   listUsers: async (req, res) => {
     try {
