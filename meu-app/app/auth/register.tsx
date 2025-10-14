@@ -25,7 +25,7 @@ export default function RegisterScreen() {
 
     setLoading(true);
     try {
-      const newUser = await registerUser(name, email, password);
+      const newUser = await registerUser({ name, email, password });
       Alert.alert("Sucesso", "Cadastro realizado!", [
         { text: "OK", onPress: () => router.replace("/(tabs)") },
       ]);
@@ -39,6 +39,7 @@ export default function RegisterScreen() {
     } finally {
       setLoading(false);
     }
+
   }
 
   return (

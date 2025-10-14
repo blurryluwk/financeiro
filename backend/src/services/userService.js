@@ -22,7 +22,8 @@ const UserService = {
       data: { name, email, password_hash },
     });
 
-    // Gera token JWT
+    await UserService.createDefaultCategories(newUser.id);
+
     const token = jwt.sign({ id: newUser.id }, JWT_SECRET, { expiresIn: "7d" });
 
     return {
@@ -31,7 +32,6 @@ const UserService = {
     };
   },
 
-  // ✅ versão correta do login
   login: async ({ email, password }) => {
     console.log("📩 Dados recebidos no login:", { email, password });
 
