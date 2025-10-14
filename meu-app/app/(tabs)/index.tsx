@@ -44,7 +44,9 @@ export default function DashboardScreen() {
         amount: Number(t.amount),
         date: t.date,
         type: t.type === "income" ? "income" : "expense",
-        category: t.category?.name || "Outros",
+        category: {
+          name: t.category?.name || t.category_name || "Outros",
+        },
       }));
 
       setTransactions(mappedData);

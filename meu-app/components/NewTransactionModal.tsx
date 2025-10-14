@@ -1,4 +1,4 @@
-// NewTransactionModal.tsx
+// ✅ NewTransactionModal.tsx (corrigido)
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -31,39 +31,33 @@ export type NewTransactionData = {
 interface NewTransactionModalProps {
   isVisible: boolean;
   onClose: () => void;
-  onSave: (data: NewTransactionData) => void;
-  availableCategories?: string[];
+  onSave: (data: NewTransactionData) => void; // apenas envia dados ao pai
 }
 
 const NewTransactionModal: React.FC<NewTransactionModalProps> = ({
   isVisible,
   onClose,
   onSave,
-  availableCategories = ["Outros"],
 }) => {
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [type, setType] = useState<"income" | "expense">("expense");
   const [categoriesData, setCategoriesData] = useState<Category[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(
-    null
-  );
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const currentDate = new Date().toISOString().split("T")[0];
 
-  // 🔹 Buscar categorias do backend usando authRequest e getUser
+  // 🔹 Buscar categorias do backend
   useEffect(() => {
     const loadCategories = async () => {
       try {
         const user = await getUser();
         if (!user?.id) return;
 
-        const data: Category[] = await authRequest(
-          `/categories?userId=${user.id}`,
-          "GET"
-        );
+        const data: Category[] = await authRequest(`/categories?userId=${user.id}`, "GET");
 
-        if (data && data.length > 0) {
+        if (data?.length > 0) {
           setCategoriesData(data);
           setSelectedCategory(data[0]);
         } else {
@@ -83,33 +77,19 @@ const NewTransactionModal: React.FC<NewTransactionModalProps> = ({
   };
 
   const handleSave = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
+
     const parsedAmount = parseFloat(amount.replace(",", "."));
 
-    if (
-      !description ||
-      isNaN(parsedAmount) ||
-      parsedAmount <= 0 ||
-      !selectedCategory
-    ) {
+    if (!description || isNaN(parsedAmount) || parsedAmount <= 0 || !selectedCategory) {
       Alert.alert("Erro", "Preencha todos os campos corretamente.");
+      setIsSaving(false);
       return;
     }
 
     try {
-      const user = await getUser();
-      if (!user?.id) throw new Error("Usuário não logado");
-
-      const payload = {
-        description,
-        amount: parsedAmount,
-        type,
-        categoryId: Number(selectedCategory.id),
-        date: currentDate,
-        userId: Number(user.id),
-      };
-
-      await authRequest("/transactions", "POST", payload);
-
+      // ✅ Apenas envia os dados para o componente pai (não faz POST)
       onSave({
         description,
         amount: parsedAmount,
@@ -118,14 +98,16 @@ const NewTransactionModal: React.FC<NewTransactionModalProps> = ({
         date: currentDate,
       });
 
+      // Limpa e fecha modal
+      setDescription("");
+      setAmount("");
+      setType("expense");
       onClose();
-    } catch (err: any) {
-      let errorMessage = "Não foi possível salvar a transação.";
-      if (err.message && typeof err.message === "string") {
-        errorMessage = err.message.replace("Error: Erro 400: ", "");
-      }
-      Alert.alert("Erro", errorMessage);
-      console.error("Erro ao salvar transação:", err);
+    } catch (err) {
+      console.error("Erro ao preparar transação:", err);
+      Alert.alert("Erro", "Não foi possível processar a transação.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -148,9 +130,7 @@ const NewTransactionModal: React.FC<NewTransactionModalProps> = ({
                   { backgroundColor: type === "expense" ? "#de1d6a" : "#eee" },
                 ]}
               >
-                <Text style={{ color: type === "expense" ? "#fff" : "#333" }}>
-                  Despesa
-                </Text>
+                <Text style={{ color: type === "expense" ? "#fff" : "#333" }}>Despesa</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -160,9 +140,7 @@ const NewTransactionModal: React.FC<NewTransactionModalProps> = ({
                   { backgroundColor: type === "income" ? "#8fccb6" : "#eee" },
                 ]}
               >
-                <Text style={{ color: type === "income" ? "#fff" : "#333" }}>
-                  Receita
-                </Text>
+                <Text style={{ color: type === "income" ? "#fff" : "#333" }}>Receita</Text>
               </TouchableOpacity>
             </View>
 
@@ -173,9 +151,9 @@ const NewTransactionModal: React.FC<NewTransactionModalProps> = ({
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.categoryScrollContainer}
             >
-              {categoriesData.map((cat, index) => (
+              {categoriesData.map((cat) => (
                 <TouchableOpacity
-                  key={`${cat.id}-${index}`}
+                  key={cat.id}
                   onPress={() => handleSelectCategory(cat)}
                   style={[
                     styles.categoryButton,
@@ -219,12 +197,22 @@ const NewTransactionModal: React.FC<NewTransactionModalProps> = ({
 
             {/* Botões */}
             <View style={styles.actionButtons}>
-              <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={onClose}
+                disabled={isSaving}
+              >
                 <Text style={styles.cancelButtonText}>Cancelar</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-                <Text style={styles.saveButtonText}>Salvar</Text>
+              <TouchableOpacity
+                style={[styles.saveButton, isSaving && { opacity: 0.7 }]}
+                onPress={handleSave}
+                disabled={isSaving}
+              >
+                <Text style={styles.saveButtonText}>
+                  {isSaving ? "Salvando..." : "Salvar"}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -234,7 +222,6 @@ const NewTransactionModal: React.FC<NewTransactionModalProps> = ({
   );
 };
 
-// Estilos mantidos
 const styles = StyleSheet.create({
   overlay: {
     position: "absolute",

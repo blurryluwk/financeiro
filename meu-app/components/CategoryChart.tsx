@@ -16,7 +16,7 @@ export default function CategoryChart({ transactions }: CategoryChartProps) {
 
     transactions.forEach((t) => {
       if (t.type === "expense") {
-        const cat = t.category || "Outros";
+        const cat = t.category?.name || "Outros";
         totals[cat] = (totals[cat] || 0) + (t.amount || 0);
       }
     });

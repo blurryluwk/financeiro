@@ -19,7 +19,7 @@ export default function TransactionList({ transactions }: TransactionListProps) 
         <TransactionCard
           key={t.id}
           description={String(t.description || "Sem descrição")}
-          category={String(t.category || "Outros")}
+          category={String(t.category?.name || "Outros")}
           amount={Number(t.amount || 0)}
           date={String(t.date || "")}
           type={t.type === "income" ? "income" : "expense"}

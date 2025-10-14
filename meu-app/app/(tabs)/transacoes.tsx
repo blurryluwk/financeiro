@@ -1,4 +1,4 @@
-// TabOneScreen.tsx (unificado)
+// TabOneScreen.tsx (limpo)
 import React, { useState, useEffect, useMemo } from "react";
 import {
   StyleSheet,
@@ -78,10 +78,8 @@ export default function TabOneScreen() {
       const user = await getUser();
       if (!user?.id) throw new Error("Usuário não logado");
 
-      // Requisição autenticada
       const apiData: TransactionAPI[] = await authRequest(`/transactions?userId=${user.id}`, "GET");
 
-      // Mapear para TransactionState
       const safeData: TransactionState[] = apiData.map(t => ({
         id: t.id,
         description: t.description || "Sem descrição",
@@ -94,14 +92,12 @@ export default function TabOneScreen() {
 
       setTransactions(safeData);
 
-      // Categorias únicas
       const uniqueCategories = Array.from(
         new Map(apiData.map(t => [t.category.id, t.category])).values()
       ).filter(Boolean) as CategoryResponse[];
 
       setApiCategories(uniqueCategories);
       setCategories(uniqueCategories.map(c => c.name));
-
     } catch (err: any) {
       console.error("Erro ao carregar transações:", err);
       setError(err.message || "Não foi possível carregar transações.");
@@ -123,7 +119,7 @@ export default function TabOneScreen() {
     });
   }, [transactions, filter]);
 
-  // Salvar nova transação
+  // Salvar nova transação (versão única)
   const handleSaveNewTransaction = async (data: NewTransactionData) => {
     try {
       const user = await getUser();
@@ -140,7 +136,6 @@ export default function TabOneScreen() {
       Alert.alert("Sucesso", "Transação salva com sucesso!");
       setIsNewTransactionModalVisible(false);
       loadTransactions();
-
     } catch (err: any) {
       console.error("Erro ao salvar transação:", err);
       Alert.alert("Erro", err.message || "Não foi possível salvar a transação.");
