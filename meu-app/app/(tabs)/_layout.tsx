@@ -1,64 +1,50 @@
-import React from "react";
-import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { Tabs } from "expo-router";
+// app/_layout.tsx
+import React, { useEffect, useState } from "react";
+import { Stack, useRouter, useSegments } from "expo-router";
+import { View, ActivityIndicator } from "react-native";
+import { getUser } from "@/services/auth";
 
-import Colors from "@/constants/Colors";
-import { useColorScheme } from "@/components/useColorScheme";
-import { useClientOnlyValue } from "@/components/useClientOnlyValue";
+export default function RootLayout() {
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+  const router = useRouter();
+  const segments = useSegments();
 
-type IconFamily = typeof FontAwesome6 | typeof MaterialCommunityIcons;
+  useEffect(() => {
+    const checkLogin = async () => {
+      try {
+        const user = await getUser(); // 🔹 pega do SecureStore
+        setIsLoggedIn(!!user?.id);
+      } catch (error) {
+        console.error("Erro ao verificar login:", error);
+        setIsLoggedIn(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-function TabBarIcon({
-  family: IconComponent,
-  name,
-  color,
-  size = 24,
-}: {
-  family: IconFamily;
-  name: string;
-  color: string;
-  size?: number;
-}) {
-  return <IconComponent name={name as any} size={size} color={color} />;
-}
+    checkLogin();
+  }, []);
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  useEffect(() => {
+    if (isLoading || isLoggedIn === null) return;
 
-  return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
-        headerShown: useClientOnlyValue(false, true),
-        tabBarShowLabel: false, // remove texto do tab bar
-      }}
-    >
-      {/* Dashboard */}
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: "Dashboard", // aparece no header
-          tabBarIcon: ({ color }) => (
-            <TabBarIcon family={FontAwesome6} name="chart-line" color={color} />
-          ),
-        }}
-      />
+    const inAuthGroup = segments[0] === "auth";
 
-      {/* Transações */}
-      <Tabs.Screen
-        name="transacoes"
-        options={{
-          title: "Transações",
-          tabBarIcon: ({ color }) => (
-            <TabBarIcon
-              family={MaterialCommunityIcons}
-              name="swap-horizontal" 
-              color={color}
-            />
-          ),
-        }}
-      />
-    </Tabs>
-  );
+    if (!isLoggedIn && !inAuthGroup) {
+      router.replace("/auth/login");
+    } else if (isLoggedIn && inAuthGroup) {
+      router.replace("/"); // Dashboard
+    }
+  }, [isLoading, isLoggedIn, segments]);
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#fff" }}>
+        <ActivityIndicator size="large" color="#4695a0" />
+      </View>
+    );
+  }
+
+  return <Stack screenOptions={{ headerShown: false }} />;
 }

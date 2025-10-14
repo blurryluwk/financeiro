@@ -1,69 +1,69 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
-  StyleSheet,
-  ScrollView,
   View,
+  ScrollView,
   TouchableOpacity,
   ActivityIndicator,
   Alert,
-  Text as RNText,
+  StyleSheet,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { Transaction } from "@/types/Transaction";
+import { getUser, logout, authRequest } from "@/services/auth";
 import CategoryChart from "@/components/CategoryChart";
 import TransactionList from "@/components/TransactionList";
-import { getUser, removeUser } from "@/services/storage";
-import { apiRequest } from "@/services/api";
 import { Text } from "@/components/Themed";
+import { Transaction } from "@/types/Transaction";
 
 export default function DashboardScreen() {
   const router = useRouter();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [userName, setUserName] = useState<string>("Usuário");
+  const [userName, setUserName] = useState<string | null>(null);
 
-  // Carrega usuário e transações
-  useEffect(() => {
-    const init = async () => {
-      try {
-        const user = await getUser();
-        if (!user) {
-          router.replace("/auth/login");
-          return;
-        }
+  // 🔹 Carregar dados
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
 
-        setUserName(user.name || "Usuário");
-
-        // 🟢 Agora enviamos o userId na requisição
-        const data = await apiRequest(`/transactions?userId=${user.id}`, "GET");
-
-        const mappedData: Transaction[] = (data || []).map((t: any) => ({
-          id: t.id,
-          description: t.description || "Sem descrição",
-          amount: Number(t.amount),
-          date: t.date,
-          type: t.type === "income" ? "income" : "expense",
-          category: t.category?.name || "Outros",
-        }));
-
-        setTransactions(mappedData);
-        setError(null);
-      } catch (err: any) {
-        console.error("Erro ao carregar transações:", err);
-        setError("Erro ao carregar dados. Tente novamente.");
-      } finally {
-        setLoading(false);
+    try {
+      const user = await getUser();
+      if (!user?.id) {
+        setError("Usuário inválido. Contate o suporte.");
+        router.replace("/auth/login");
+        return;
       }
-    };
 
-    init();
-  }, []);
+      setUserName(user.name || "Usuário");
+
+      const data = await authRequest(`/transactions?userId=${user.id}`, "GET");
+
+      const mappedData: Transaction[] = (data || []).map((t: any) => ({
+        id: t.id,
+        description: t.description || "Sem descrição",
+        amount: Number(t.amount),
+        date: t.date,
+        type: t.type === "income" ? "income" : "expense",
+        category: t.category?.name || "Outros",
+      }));
+
+      setTransactions(mappedData);
+    } catch (err: any) {
+      console.error("Erro ao carregar transações:", err);
+      setError("Erro ao carregar dados. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
+  }, [router]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   // Logout
   const handleLogout = async () => {
     try {
-      await removeUser();
+      await logout();
       Alert.alert("Logout", "Você saiu da sua conta.");
       router.replace("/auth/login");
     } catch (err) {
@@ -75,7 +75,7 @@ export default function DashboardScreen() {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color="#4695a0ff" />
-        <RNText>Carregando...</RNText>
+        <Text>Carregando...</Text>
       </View>
     );
   }
@@ -84,10 +84,7 @@ export default function DashboardScreen() {
     return (
       <View style={styles.centered}>
         <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity
-          style={styles.reloadButton}
-          onPress={() => router.reload()}
-        >
+        <TouchableOpacity style={styles.reloadButton} onPress={loadData}>
           <Text style={styles.reloadText}>Tentar novamente</Text>
         </TouchableOpacity>
       </View>
@@ -96,7 +93,6 @@ export default function DashboardScreen() {
 
   return (
     <ScrollView style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Dashboard de {userName}</Text>
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
@@ -104,10 +100,7 @@ export default function DashboardScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Gráfico de categorias */}
       <CategoryChart transactions={transactions} />
-
-      {/* Lista de transações */}
       <TransactionList transactions={transactions} />
     </ScrollView>
   );

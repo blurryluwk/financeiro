@@ -5,9 +5,11 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { login } from "@/services/auth"; 
+import { login } from "@/services/auth";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -25,20 +27,23 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
-      // faz o login e salva token + user automaticamente via auth.ts
-      await login(email, password);
+      const user = await login(email, password);
 
-      // redireciona para a tela principal
+      if (!user?.id) {
+        setError("Usuário inválido. Contate o suporte.");
+        return;
+      }
+
       router.replace("/(tabs)");
     } catch (err: any) {
       console.error("Erro ao fazer login:", err);
-      if (err.message.includes("401")) {
-        setError("E-mail ou senha incorretos");
-      } else if (err.message.includes("404")) {
-        setError("Usuário não encontrado");
-      } else {
-        setError("Erro ao fazer login");
-      }
+      setError(
+        err.message.includes("401")
+          ? "E-mail ou senha incorretos"
+          : err.message.includes("404")
+          ? "Usuário não encontrado"
+          : "Erro ao fazer login"
+      );
     } finally {
       setLoading(false);
     }
@@ -47,7 +52,6 @@ export default function LoginScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Fazer login</Text>
-
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
       <TextInput
@@ -73,9 +77,11 @@ export default function LoginScreen() {
         onPress={handleLogin}
         disabled={loading}
       >
-        <Text style={styles.buttonText}>
-          {loading ? "Entrando..." : "Entrar"}
-        </Text>
+        {loading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.buttonText}>Entrar</Text>
+        )}
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => router.push("/auth/register")}>
@@ -90,14 +96,10 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#fff",
     padding: 20,
+    backgroundColor: "#fff",
   },
-  title: {
-    fontSize: 26,
-    fontWeight: "bold",
-    marginBottom: 20,
-  },
+  title: { fontSize: 26, fontWeight: "bold", marginBottom: 20 },
   errorText: {
     color: "#ff3b30",
     marginBottom: 10,
@@ -122,13 +124,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginTop: 10,
   },
-  buttonText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  link: {
-    marginTop: 20,
-    color: "#007AFF",
-  },
+  buttonText: { color: "#fff", fontSize: 18, fontWeight: "bold" },
+  link: { marginTop: 20, color: "#007AFF" },
 });

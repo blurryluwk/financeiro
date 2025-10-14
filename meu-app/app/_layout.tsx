@@ -1,8 +1,8 @@
 // app/_layout.tsx
 import React, { useEffect, useState } from "react";
 import { Stack, useRouter, useSegments } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { View, ActivityIndicator } from "react-native";
+import { getUser } from "@/services/auth";
 
 export default function RootLayout() {
   const [isLoading, setIsLoading] = useState(true);
@@ -13,8 +13,8 @@ export default function RootLayout() {
   useEffect(() => {
     const checkLogin = async () => {
       try {
-        const storedUser = await AsyncStorage.getItem("@user");
-        setIsLoggedIn(!!storedUser);
+        const user = await getUser(); // 🔹 pega do SecureStore
+        setIsLoggedIn(!!user?.id);
       } catch (error) {
         console.error("Erro ao verificar login:", error);
         setIsLoggedIn(false);
@@ -34,20 +34,13 @@ export default function RootLayout() {
     if (!isLoggedIn && !inAuthGroup) {
       router.replace("/auth/login");
     } else if (isLoggedIn && inAuthGroup) {
-      router.replace("/");
+      router.replace("/"); // Dashboard
     }
   }, [isLoading, isLoggedIn, segments]);
 
   if (isLoading) {
     return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: "center",
-          alignItems: "center",
-          backgroundColor: "#fff",
-        }}
-      >
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#fff" }}>
         <ActivityIndicator size="large" color="#4695a0" />
       </View>
     );

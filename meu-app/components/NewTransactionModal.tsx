@@ -11,8 +11,7 @@ import {
   Modal,
   Pressable,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { apiRequest } from "@/services/api";
+import { authRequest, getUser } from "@/services/auth";
 
 // Interface de Categoria
 interface Category {
@@ -52,15 +51,14 @@ const NewTransactionModal: React.FC<NewTransactionModalProps> = ({
 
   const currentDate = new Date().toISOString().split("T")[0];
 
-  // 🔹 Buscar categorias do backend
+  // 🔹 Buscar categorias do backend usando authRequest e getUser
   useEffect(() => {
     const loadCategories = async () => {
       try {
-        const userJson = await AsyncStorage.getItem("@user");
-        if (!userJson) return;
+        const user = await getUser();
+        if (!user?.id) return;
 
-        const user = JSON.parse(userJson);
-        const data: Category[] = await apiRequest(
+        const data: Category[] = await authRequest(
           `/categories?userId=${user.id}`,
           "GET"
         );
@@ -80,24 +78,26 @@ const NewTransactionModal: React.FC<NewTransactionModalProps> = ({
     loadCategories();
   }, []);
 
-  // 🔹 Selecionar categoria
   const handleSelectCategory = (cat: Category) => {
     setSelectedCategory(cat);
   };
 
-  // 🔹 Salvar transação
   const handleSave = async () => {
     const parsedAmount = parseFloat(amount.replace(",", "."));
 
-    if (!description || isNaN(parsedAmount) || parsedAmount <= 0 || !selectedCategory) {
+    if (
+      !description ||
+      isNaN(parsedAmount) ||
+      parsedAmount <= 0 ||
+      !selectedCategory
+    ) {
       Alert.alert("Erro", "Preencha todos os campos corretamente.");
       return;
     }
 
     try {
-      const userJson = await AsyncStorage.getItem("@user");
-      if (!userJson) throw new Error("Usuário não logado");
-      const user = JSON.parse(userJson);
+      const user = await getUser();
+      if (!user?.id) throw new Error("Usuário não logado");
 
       const payload = {
         description,
@@ -108,7 +108,7 @@ const NewTransactionModal: React.FC<NewTransactionModalProps> = ({
         userId: Number(user.id),
       };
 
-      await apiRequest("/transactions", "POST", payload);
+      await authRequest("/transactions", "POST", payload);
 
       onSave({
         description,
@@ -187,8 +187,7 @@ const NewTransactionModal: React.FC<NewTransactionModalProps> = ({
                 >
                   <Text
                     style={{
-                      color:
-                        selectedCategory?.id === cat.id ? "#fff" : "#333",
+                      color: selectedCategory?.id === cat.id ? "#fff" : "#333",
                     }}
                   >
                     {cat.name}
@@ -235,6 +234,7 @@ const NewTransactionModal: React.FC<NewTransactionModalProps> = ({
   );
 };
 
+// Estilos mantidos
 const styles = StyleSheet.create({
   overlay: {
     position: "absolute",
@@ -244,10 +244,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: "rgba(0,0,0,0.5)",
   },
-  centeredView: {
-    flex: 1,
-    justifyContent: "flex-end",
-  },
+  centeredView: { flex: 1, justifyContent: "flex-end" },
   modalView: {
     width: "100%",
     backgroundColor: "white",
@@ -294,10 +291,7 @@ const styles = StyleSheet.create({
     width: "45%",
     alignItems: "center",
   },
-  categoryScrollContainer: {
-    flexDirection: "row",
-    marginBottom: 15,
-  },
+  categoryScrollContainer: { flexDirection: "row", marginBottom: 15 },
   categoryButton: {
     paddingHorizontal: 15,
     paddingVertical: 8,
@@ -324,20 +318,14 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: "#ddd",
   },
-  cancelButtonText: {
-    color: "#333",
-    fontWeight: "bold",
-  },
+  cancelButtonText: { color: "#333", fontWeight: "bold" },
   saveButton: {
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 8,
     backgroundColor: "#4695a0",
   },
-  saveButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-  },
+  saveButtonText: { color: "#fff", fontWeight: "bold" },
 });
 
 export default NewTransactionModal;
