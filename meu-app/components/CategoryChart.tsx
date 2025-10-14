@@ -1,6 +1,4 @@
-// components/CategoryChart.tsx
-
-import React from "react";
+import React, { useMemo } from "react";
 import { StyleSheet, Dimensions, View, Text } from "react-native";
 import { PieChart } from "react-native-chart-kit";
 import { Transaction } from "@/types/Transaction";
@@ -12,35 +10,37 @@ interface CategoryChartProps {
 }
 
 export default function CategoryChart({ transactions }: CategoryChartProps) {
-  // Agrupar despesas por categoria
-  const categoryTotals: Record<string, number> = {};
-  transactions.forEach((t) => {
-    if (t.type === "expense") {
-      const cat = t.category || "Outros";
-      categoryTotals[cat] = (categoryTotals[cat] || 0) + t.amount;
-    }
-  });
+  // Agrupa despesas por categoria
+  const chartData = useMemo(() => {
+    const totals: Record<string, number> = {};
 
-  const colors = [
-    "#4695a0ff",
-    "#8fccb6ff",
-    "#ffeaccff",
-    "#ff995eff",
-    "#de1d6aff",
-    "#5f335fff",
-  ];
+    transactions.forEach((t) => {
+      if (t.type === "expense") {
+        const cat = t.category || "Outros";
+        totals[cat] = (totals[cat] || 0) + (t.amount || 0);
+      }
+    });
 
-  // Dados formatados para gráfico
-  const chartData = Object.keys(categoryTotals).map((cat, i) => ({
-    name: cat,
-    amount: categoryTotals[cat],
-    color: colors[i % colors.length] || "#000000",
-    legendFontColor: "#333",
-    legendFontSize: 14,
-  }));
+    const colors = [
+      "#4695a0ff",
+      "#8fccb6ff",
+      "#ffeaccff",
+      "#ff995eff",
+      "#de1d6aff",
+      "#5f335fff",
+    ];
+
+    return Object.keys(totals).map((cat, i) => ({
+      name: cat,
+      amount: totals[cat],
+      color: colors[i % colors.length],
+      legendFontColor: "#333",
+      legendFontSize: 14,
+    }));
+  }, [transactions]);
 
   return (
-    <View>
+    <View style={{ marginVertical: 10 }}>
       <Text style={styles.subtitle}>Gastos por categoria</Text>
       {chartData.length > 0 ? (
         <PieChart
@@ -60,7 +60,6 @@ export default function CategoryChart({ transactions }: CategoryChartProps) {
   );
 }
 
-// Configuração visual do gráfico
 const chartConfig = {
   backgroundColor: "#ffffff",
   backgroundGradientFrom: "#ffffff",
@@ -75,10 +74,11 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 18,
     fontWeight: "600",
-    marginVertical: 10,
+    marginBottom: 10,
   },
   noDataText: {
     textAlign: "center",
     marginTop: 20,
+    color: "#777",
   },
 });

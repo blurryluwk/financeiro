@@ -1,4 +1,5 @@
 import UserService from "../services/userService.js";
+import jwt from "jsonwebtoken";
 
 const UserController = {
   register: async (req, res) => {
@@ -10,7 +11,14 @@ const UserController = {
         await UserService.createDefaultCategories(newUser.id);
       }
 
-      return res.status(201).json(newUser);
+      // Criar token JWT
+      const token = jwt.sign(
+        { id: newUser.id, email: newUser.email },
+        process.env.JWT_SECRET || "default_secret",
+        { expiresIn: "7d" }
+      );
+
+      return res.status(201).json({ user: newUser, token });
     } catch (error) {
       console.error(error);
       return res
@@ -22,7 +30,16 @@ const UserController = {
   login: async (req, res) => {
     try {
       const user = await UserService.login(req.body);
-      return res.json(user);
+
+      // criar token JWT
+      const token = jwt.sign(
+        { id: user.id, email: user.email },
+        process.env.JWT_SECRET || "default_secret",
+        { expiresIn: "7d" }
+      );
+
+      // ⚠ retorna diretamente user + token
+      return res.json({ user, token });
     } catch (error) {
       console.error(error);
       return res

@@ -84,7 +84,7 @@ export default function TabOneScreen() {
   const handleLogout = async () => {
     await AsyncStorage.removeItem("@user");
     Alert.alert("Logout", "Você saiu da sua conta.");
-    router.replace("/login");
+    router.replace("/auth/login");
   };
 
   // Buscar transações do usuário

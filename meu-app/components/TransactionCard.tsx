@@ -9,22 +9,29 @@ type TransactionCardProps = {
   category: string;
 };
 
-const TransactionCard: React.FC<TransactionCardProps> = ({ description, amount, date, type, category }) => {
-  const amountColor = type === 'income' ? 'green' : 'red';
+const TransactionCard: React.FC<TransactionCardProps> = ({
+  description,
+  amount,
+  date,
+  type,
+  category,
+}) => {
+  const amountColor = type === "income" ? "green" : "red";
 
   return (
     <View style={styles.card}>
       <View style={styles.info}>
-        <Text style={styles.description}>{description}</Text>
-        <Text style={styles.category}>{category}</Text>
-        <Text style={styles.date}>{date}</Text>
+        <Text style={styles.description}>{String(description)}</Text>
+        <Text style={styles.category}>{String(category)}</Text>
+        <Text style={styles.date}>{String(date)}</Text>
       </View>
       <Text style={[styles.amount, { color: amountColor }]}>
-        R$ {amount.toFixed(2)}
+        R$ {Number(amount).toFixed(2)}
       </Text>
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   card: {

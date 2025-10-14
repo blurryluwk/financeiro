@@ -1,7 +1,9 @@
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
+const JWT_SECRET = process.env.JWT_SECRET || "umsegurosegredo123";
 
 const UserService = {
   register: async ({ name, email, password }) => {
@@ -20,7 +22,10 @@ const UserService = {
       data: { name, email, password_hash },
     });
 
-    return newUser;
+    // Gera token JWT
+    const token = jwt.sign({ id: newUser.id }, JWT_SECRET, { expiresIn: "7d" });
+
+    return { user: { id: newUser.id, name: newUser.name, email: newUser.email }, token };
   },
 
   login: async ({ email, password }) => {
@@ -32,11 +37,14 @@ const UserService = {
     const validPassword = await bcrypt.compare(password, user.password_hash);
     if (!validPassword) throw { status: 401, message: "Senha incorreta" };
 
-    return { id: user.id, name: user.name, email: user.email };
+    // Gera token JWT
+    const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: "7d" });
+
+    return { user: { id: user.id, name: user.name, email: user.email }, token };
   },
 
   listUsers: async () => {
-    return await prisma.user.findMany();
+    return await prisma.user.findMany({ select: { id: true, name: true, email: true } });
   },
 
   createDefaultCategories: async (userId) => {

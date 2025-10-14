@@ -59,17 +59,6 @@ export default function TabLayout() {
           ),
         }}
       />
-
-      {/* Carteira / Finanças */}
-      <Tabs.Screen
-        name="wallet"
-        options={{
-          title: "Carteira",
-          tabBarIcon: ({ color }) => (
-            <TabBarIcon family={FontAwesome6} name="coins" color={color} />
-          ),
-        }}
-      />
     </Tabs>
   );
 }

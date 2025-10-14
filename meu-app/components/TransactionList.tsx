@@ -1,5 +1,3 @@
-// components/TransactionList.tsx
-
 import React from "react";
 import { StyleSheet, View, Text } from "react-native";
 import TransactionCard from "@/components/TransactionCard";
@@ -15,13 +13,16 @@ export default function TransactionList({ transactions }: TransactionListProps) 
   }
 
   return (
-    <View>
+    <View style={{ marginVertical: 10 }}>
       <Text style={styles.subtitle}>Transações recentes</Text>
       {transactions.map((t) => (
         <TransactionCard
           key={t.id}
-          {...t}
-          description={t.description || "Sem descrição"} // garante tipagem segura
+          description={String(t.description || "Sem descrição")}
+          category={String(t.category || "Outros")}
+          amount={Number(t.amount || 0)}
+          date={String(t.date || "")}
+          type={t.type === "income" ? "income" : "expense"}
         />
       ))}
     </View>
@@ -32,8 +33,7 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 18,
     fontWeight: "600",
-    marginVertical: 10,
-    marginTop: 20,
+    marginBottom: 10,
   },
   emptyText: {
     textAlign: "center",
