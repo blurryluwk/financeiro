@@ -16,7 +16,7 @@ Luton Money foi criado com o objetivo de facilitar o controle financeiro pessoal
 
 - Mantenha o registro de todas as suas entradas e saídas de dinheiro.
 - Crie metas de economia, como "Guardar R$5.000 para uma viagem", tendo uma data-limite para cumprir a meta.
-- Acompanhe seu progresso financeiro em tempo real.
+- Acompanhe seu progresso financeiro em tempo real!
 
 ## 🧩 Diagrama de Casos de Uso UML
 
