@@ -10,6 +10,7 @@ import {
 import { useRouter } from "expo-router";
 import { getUser, logout, authRequest } from "@/services/auth";
 import CategoryChart from "@/components/CategoryChart";
+import BudgetBarChart from "@/components/BudgetBarChart";
 import TransactionList from "@/components/TransactionList";
 import { Text } from "@/components/Themed";
 import { Transaction } from "@/types/Transaction";
@@ -103,6 +104,9 @@ export default function DashboardScreen() {
       </View>
 
       <CategoryChart transactions={transactions} />
+      <BudgetBarChart
+        transactions={transactions}
+      />
       <TransactionList transactions={transactions} />
     </ScrollView>
   );

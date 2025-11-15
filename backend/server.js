@@ -3,6 +3,7 @@ import cors from "cors";
 import transactionRoutes from "./src/routes/transactionRoutes.js";
 import userRoutes from "./src/routes/userRoutes.js";
 import categoryRoutes from "./src/routes/categoryRoutes.js";
+import budgetRoutes from "./src/routes/budgetRoutes.js";
 
 const app = express();
 
@@ -12,6 +13,7 @@ app.use(express.json());
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/categories", categoryRoutes);
+app.use("/api/budgets", budgetRoutes);
 
 const PORT = process.env.PORT || 3000;
 

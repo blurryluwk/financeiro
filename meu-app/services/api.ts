@@ -14,23 +14,23 @@ export async function apiRequest(
   const url = `${API_BASE_URL}${endpoint}`;
 
   try {
-    // 🔐 Recupera token JWT (se disponível)
+    // Recupera token JWT (se disponível)
     const token = tokenParam || (await getToken());
 
-    // 🔧 Monta cabeçalhos
+    // Monta cabeçalhos
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
     };
     if (token) headers.Authorization = `Bearer ${token}`;
 
-    // ⚙️ Configurações da requisição
+    // Configurações da requisição
     const options: RequestInit = {
       method,
       headers,
       body: body && method !== "GET" ? JSON.stringify(body) : undefined,
     };
 
-    // 🛰️ Log detalhado da requisição
+    // Log detalhado da requisição
     console.log("🌐 Enviando requisição:");
     console.log("➡️ URL:", url);
     console.log("➡️ Método:", method);
