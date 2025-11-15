@@ -61,7 +61,7 @@ export default function TabOneScreen() {
 
       console.log("Categoria da API:", cat.name, "ID:", cat.id);
     });
-    
+
     console.log("Mapa de Categorias Final:", Array.from(map.entries()));
 
     return map;
@@ -80,24 +80,34 @@ export default function TabOneScreen() {
     setError(null);
 
     try {
-        const user = await getUser();
-        if (!user?.id) throw new Error("Usuário não logado");
+      const user = await getUser();
+      if (!user?.id) throw new Error("Usuário não logado");
 
-        // 1. CHAME TODAS AS CATEGORIAS AQUI (NOVO ENDPOINT)
-        const allCategories: CategoryResponse[] = await authRequest(`/categories?userId=${user.id}`, "GET");
-        setApiCategories(allCategories);
-        setCategories(allCategories.map(c => c.name));
+      // 1. CATEGORIAS 
+      const allCategories: CategoryResponse[] = await authRequest(`/categories?userId=${user.id}`, "GET");
+      setApiCategories(allCategories);
+      setCategories(allCategories.map(c => c.name));
 
-        // 2. CARREGUE AS TRANSAÇÕES
-        const apiData: TransactionAPI[] = await authRequest(`/transactions?userId=${user.id}`, "GET");
-        
-        // ... (o resto da lógica de setTransactions permanece)
-        // ... (setTransactions(safeData))
+      // 2. TRANSAÇÕES
+      const apiData: TransactionAPI[] = await authRequest(`/transactions?userId=${user.id}`, "GET");
+
+      const safeData: TransactionState[] = apiData.map(t => ({
+        id: t.id,
+        description: t.description || "Sem descrição",
+        amount: Number(t.amount),
+        date: t.date,
+        type: t.type === "income" ? "income" : "expense",
+        categoryName: t.category?.name || "Outros",
+        categoryId: t.category?.id || 0,
+      }));
+
+      setTransactions(safeData); 
 
     } catch (err: any) {
-        // ...
+      console.error("Erro ao carregar transações:", err);
+      setError(err.message || "Não foi possível carregar transações.");
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
 
@@ -119,14 +129,14 @@ export default function TabOneScreen() {
     try {
 
       const categoryNameFromForm = data.category;
-      
+
       // Log: O valor que o usuário/formulário está enviando
       console.log("Nome da Categoria Recebido (data.category):", `'${categoryNameFromForm}'`);
-      
+
       // Log: O valor APÓS a conversão para minúsculas (com trim)
       const keyToSearch = categoryNameFromForm.toLowerCase().trim();
       console.log("Chave de Busca no Mapa (toLowerCase().trim()):", `'${keyToSearch}'`);
-      
+
       const user = await getUser();
       if (!user?.id) throw new Error("Usuário não logado");
 
