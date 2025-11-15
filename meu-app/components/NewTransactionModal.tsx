@@ -30,14 +30,17 @@ export type NewTransactionData = {
 interface NewTransactionModalProps {
   isVisible: boolean;
   onClose: () => void;
-  onSave: (data: NewTransactionData) => void; // apenas envia dados ao pai
+  onSave: (data: NewTransactionData) => void; 
+  initialData?: NewTransactionData; // 1. O tipo foi adicionado corretamente
 }
 
 const NewTransactionModal: React.FC<NewTransactionModalProps> = ({
   isVisible,
   onClose,
   onSave,
+  initialData, // 2. RECEBE A PROP
 }) => {
+  // 3. Estados inicializados vazios, serão preenchidos pelo useEffect
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [type, setType] = useState<"income" | "expense">("expense");
@@ -46,8 +49,9 @@ const NewTransactionModal: React.FC<NewTransactionModalProps> = ({
   const [isSaving, setIsSaving] = useState(false);
 
   const currentDate = new Date().toISOString().split("T")[0];
+  const [date, setDate] = useState(currentDate); // Adicionei o estado 'date' para permitir edição futura, mas usando 'currentDate' como padrão.
 
-  // 🔹 Buscar categorias do backend
+  // 🔹 useEffect para carregar categorias (mantido)
   useEffect(() => {
     const loadCategories = async () => {
       try {
@@ -55,27 +59,62 @@ const NewTransactionModal: React.FC<NewTransactionModalProps> = ({
         if (!user?.id) return;
 
         const data: Category[] = await authRequest(`/categories?userId=${user.id}`, "GET");
-
-        if (data?.length > 0) {
-          setCategoriesData(data);
-          setSelectedCategory(data[0]);
+        setCategoriesData(data);
+        
+        // Se houver dados iniciais, tenta selecionar a categoria correspondente.
+        if (initialData) {
+            const initialCat = data.find(c => c.name === initialData.category);
+            setSelectedCategory(initialCat || data[0] || null);
+        } else if (data.length > 0) {
+            setSelectedCategory(data[0]); // Padrão: primeira categoria
         } else {
-          setCategoriesData([]);
-          setSelectedCategory(null);
+            setSelectedCategory(null);
         }
+
       } catch (error) {
         console.error("Erro ao buscar categorias:", error);
+        setCategoriesData([]);
+        setSelectedCategory(null);
       }
     };
 
-    loadCategories();
-  }, []);
+    if (isVisible) {
+      loadCategories();
+    }
+    // Adiciona isVisible às dependências para recarregar categorias quando o modal é aberto
+  }, [isVisible, initialData]); 
+
+
+  // useEffect para SINCRONIZAR os dados iniciais com os estados do formulário
+  useEffect(() => {
+    if (isVisible) {
+      if (initialData) {
+        // Modo Edição: Preenche os estados
+        setDescription(initialData.description || "");
+        setAmount(initialData.amount?.toString() || "");
+        setType(initialData.type || "expense");
+        setDate(initialData.date || currentDate);
+        
+        // Atualiza a categoria selecionada (será sobrescrita pelo loadCategories se necessário)
+        const initialCat = categoriesData.find(c => c.name === initialData.category);
+        setSelectedCategory(initialCat || null);
+
+      } else {
+        // Modo Adicionar: Limpa os estados
+        setDescription("");
+        setAmount("");
+        setType("expense");
+        setDate(currentDate);
+        // Mantém a categoria selecionada como a primeira ou a que foi carregada por último
+      }
+    }
+  }, [isVisible, initialData, categoriesData]); // Depende de categoriesData para garantir a sincronia da categoria
 
   const handleSelectCategory = (cat: Category) => {
     setSelectedCategory(cat);
   };
 
-  const handleSave = async () => {
+  const handleSave = () => { // Mudança para handleSave sem async, pois o POST é feito no pai
     if (isSaving) return;
     setIsSaving(true);
 
@@ -86,28 +125,19 @@ const NewTransactionModal: React.FC<NewTransactionModalProps> = ({
       setIsSaving(false);
       return;
     }
-
-    try {
-      // ✅ Apenas envia os dados para o componente pai (não faz POST)
-      onSave({
+    
+    // ✅ Envia os dados para o componente pai
+    onSave({
         description,
         amount: parsedAmount,
         type,
         category: selectedCategory.name,
-        date: currentDate,
-      });
+        date: date, // Usa o estado 'date' que foi preenchido
+    });
 
-      // Limpa e fecha modal
-      setDescription("");
-      setAmount("");
-      setType("expense");
-      onClose();
-    } catch (err) {
-      console.error("Erro ao preparar transação:", err);
-      Alert.alert("Erro", "Não foi possível processar a transação.");
-    } finally {
-      setIsSaving(false);
-    }
+    // Limpa e fecha modal
+    setIsSaving(false);
+    onClose();
   };
 
   return (
@@ -117,7 +147,9 @@ const NewTransactionModal: React.FC<NewTransactionModalProps> = ({
 
         <View style={styles.centeredView}>
           <View style={styles.modalView}>
-            <Text style={styles.modalTitle}>Nova Transação</Text>
+            <Text style={styles.modalTitle}>
+                {initialData ? "Editar Transação" : "Nova Transação"} 
+            </Text>
 
             {/* Tipo */}
             <Text style={styles.label}>Tipo:</Text>
@@ -192,7 +224,7 @@ const NewTransactionModal: React.FC<NewTransactionModalProps> = ({
               onChangeText={setAmount}
             />
 
-            <Text style={styles.dateText}>Data: {currentDate}</Text>
+            <Text style={styles.dateText}>Data: {date}</Text> {/* Usa o estado 'date' */}
 
             {/* Botões */}
             <View style={styles.actionButtons}>
