@@ -57,8 +57,13 @@ export default function TabOneScreen() {
   const categoryNameToIdMap = useMemo(() => {
     const map = new Map<string, number>();
     apiCategories.forEach(cat => {
-      if (cat.name) map.set(cat.name, cat.id);
+      if (cat.name) map.set(cat.name.toLowerCase(), cat.id);
+
+      console.log("Categoria da API:", cat.name, "ID:", cat.id);
     });
+    
+    console.log("Mapa de Categorias Final:", Array.from(map.entries()));
+
     return map;
   }, [apiCategories]);
 
@@ -75,34 +80,24 @@ export default function TabOneScreen() {
     setError(null);
 
     try {
-      const user = await getUser();
-      if (!user?.id) throw new Error("Usuário não logado");
+        const user = await getUser();
+        if (!user?.id) throw new Error("Usuário não logado");
 
-      const apiData: TransactionAPI[] = await authRequest(`/transactions?userId=${user.id}`, "GET");
+        // 1. CHAME TODAS AS CATEGORIAS AQUI (NOVO ENDPOINT)
+        const allCategories: CategoryResponse[] = await authRequest(`/categories?userId=${user.id}`, "GET");
+        setApiCategories(allCategories);
+        setCategories(allCategories.map(c => c.name));
 
-      const safeData: TransactionState[] = apiData.map(t => ({
-        id: t.id,
-        description: t.description || "Sem descrição",
-        amount: Number(t.amount),
-        date: t.date,
-        type: t.type === "income" ? "income" : "expense",
-        categoryName: t.category?.name || "Outros",
-        categoryId: t.category?.id || 0,
-      }));
+        // 2. CARREGUE AS TRANSAÇÕES
+        const apiData: TransactionAPI[] = await authRequest(`/transactions?userId=${user.id}`, "GET");
+        
+        // ... (o resto da lógica de setTransactions permanece)
+        // ... (setTransactions(safeData))
 
-      setTransactions(safeData);
-
-      const uniqueCategories = Array.from(
-        new Map(apiData.map(t => [t.category.id, t.category])).values()
-      ).filter(Boolean) as CategoryResponse[];
-
-      setApiCategories(uniqueCategories);
-      setCategories(uniqueCategories.map(c => c.name));
     } catch (err: any) {
-      console.error("Erro ao carregar transações:", err);
-      setError(err.message || "Não foi possível carregar transações.");
+        // ...
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
   };
 
@@ -122,11 +117,24 @@ export default function TabOneScreen() {
   // Salvar nova transação (versão única)
   const handleSaveNewTransaction = async (data: NewTransactionData) => {
     try {
+
+      const categoryNameFromForm = data.category;
+      
+      // Log: O valor que o usuário/formulário está enviando
+      console.log("Nome da Categoria Recebido (data.category):", `'${categoryNameFromForm}'`);
+      
+      // Log: O valor APÓS a conversão para minúsculas (com trim)
+      const keyToSearch = categoryNameFromForm.toLowerCase().trim();
+      console.log("Chave de Busca no Mapa (toLowerCase().trim()):", `'${keyToSearch}'`);
+      
       const user = await getUser();
       if (!user?.id) throw new Error("Usuário não logado");
 
-      const categoryId = categoryNameToIdMap.get(data.category);
+      const categoryId = categoryNameToIdMap.get(data.category.toLowerCase());
       if (!categoryId) throw new Error(`Categoria '${data.category}' não encontrada`);
+
+      // Log: O resultado da busca
+      console.log("Resultado da Busca (categoryId):", categoryId)
 
       const payload = { ...data, categoryId, userId: Number(user.id) };
       delete (payload as any).category;
