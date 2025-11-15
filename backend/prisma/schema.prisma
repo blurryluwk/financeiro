@@ -20,6 +20,7 @@ model User {
   
   categories   Category[]
   transactions Transaction[]
+  budgets  Budget[]
 
   @@map("users")
 }
@@ -32,6 +33,8 @@ model Category {
   user    User     @relation(fields: [user_id], references: [id])
   
   transactions Transaction[]
+  budgets  Budget[]
+
   @@map("categories")
 }
 
@@ -52,11 +55,13 @@ model Transaction {
 
 // Orçamentos
 model Budget {
-  id       Int     @id @default(autoincrement())
-  userId   Int
-  category String
-  limit    Float
-  user     User    @relation(fields: [userId], references: [id])
-  @@map("budgets)
+  id          Int      @id @default(autoincrement())
+  user_id     Int
+  category_id Int
+  amount      Float
+  user        User     @relation(fields: [user_id], references: [id])
+  category    Category @relation(fields: [category_id], references: [id])
+
+  @@map("budgets")
 }
 

@@ -1,7 +1,7 @@
-const budgetService = require("../services/budgetService");
+import BudgetService from "../services/budgetService.js";
 
-module.exports = {
-  async getBudgets(req, res) {
+class BudgetController {
+  async list(req, res) {
     try {
       const userId = Number(req.query.userId);
 
@@ -9,15 +9,15 @@ module.exports = {
         return res.status(400).json({ error: "userId é obrigatório." });
       }
 
-      const budgets = await budgetService.getBudgets(userId);
+      const budgets = await BudgetService.list(userId);
       res.json(budgets);
     } catch (err) {
-      console.error("Erro no getBudgets:", err);
+      console.error("Erro em BudgetController.list:", err);
       res.status(500).json({ error: "Erro ao buscar budgets." });
     }
-  },
+  }
 
-  async saveBudget(req, res) {
+  async createOrUpdate(req, res) {
     try {
       const { userId, category, limit } = req.body;
 
@@ -25,7 +25,7 @@ module.exports = {
         return res.status(400).json({ error: "Dados incompletos." });
       }
 
-      const result = await budgetService.saveBudget(
+      const result = await BudgetService.save(
         Number(userId),
         category,
         Number(limit)
@@ -33,25 +33,27 @@ module.exports = {
 
       res.json(result);
     } catch (err) {
-      console.error("Erro no saveBudget:", err);
+      console.error("Erro em BudgetController.createOrUpdate:", err);
       res.status(500).json({ error: "Erro ao salvar orçamento." });
     }
-  },
+  }
 
-  async deleteBudget(req, res) {
+  async delete(req, res) {
     try {
       const id = Number(req.params.id);
 
       if (!id) {
-        return res.status(400).json({ error: "ID inválido" });
+        return res.status(400).json({ error: "ID inválido." });
       }
 
-      await budgetService.deleteBudget(id);
+      await BudgetService.delete(id);
 
       res.json({ success: true });
     } catch (err) {
-      console.error("Erro no deleteBudget:", err);
+      console.error("Erro em BudgetController.delete:", err);
       res.status(500).json({ error: "Erro ao apagar orçamento." });
     }
-  },
-};
+  }
+}
+
+export default new BudgetController();

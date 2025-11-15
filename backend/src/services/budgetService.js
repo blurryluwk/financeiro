@@ -1,22 +1,26 @@
-const budgetRepo = require("../repositories/budgetRepository");
+import BudgetRepository from "../repositories/budgetRepository.js";
 
-module.exports = {
-  async getBudgets(userId) {
-    return budgetRepo.findByUser(userId);
-  },
+class BudgetService {
+  async list(userId) {
+    return BudgetRepository.findAllByUser(userId);
+  }
 
-  async saveBudget(userId, category, limit) {
-    // Verifica se já existe budget para a categoria
-    const exists = await budgetRepo.findByUserAndCategory(userId, category);
+  async save(userId, category, limit) {
+    const existing = await BudgetRepository.findByUserAndCategory(
+      userId,
+      category
+    );
 
-    if (exists) {
-      return budgetRepo.updateBudget(exists.id, limit);
+    if (existing) {
+      return BudgetRepository.update(existing.id, limit);
     }
 
-    return budgetRepo.createBudget(userId, category, limit);
-  },
+    return BudgetRepository.create(userId, category, limit);
+  }
 
-  async deleteBudget(id) {
-    return budgetRepo.deleteBudget(id);
-  },
-};
+  async delete(id) {
+    return BudgetRepository.delete(id);
+  }
+}
+
+export default new BudgetService();

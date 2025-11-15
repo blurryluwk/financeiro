@@ -1,36 +1,48 @@
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
-module.exports = {
-  async findByUser(userId) {
+class BudgetRepository {
+  // Lista todos os budgets de um usuário, incluindo os dados da categoria
+  async findAllByUser(user_id) {
     return prisma.budget.findMany({
-      where: { userId },
-      orderBy: { category: "asc" },
+      where: { user_id },
+      include: { category: true }, // inclui dados da categoria
+      orderBy: { category_id: "asc" },
     });
-  },
+  }
 
-  async findByUserAndCategory(userId, category) {
+  // Busca budget de um usuário para uma categoria específica
+  async findByUserAndCategory(user_id, category_id) {
     return prisma.budget.findFirst({
-      where: { userId, category },
+      where: { user_id, category_id },
     });
-  },
+  }
 
-  async createBudget(userId, category, limit) {
+  // Cria um novo budget
+  async create(user_id, category_id, limit) {
     return prisma.budget.create({
-      data: { userId, category, limit: Number(limit) },
+      data: {
+        user_id,
+        category_id,
+        limit: Number(limit),
+      },
     });
-  },
+  }
 
-  async updateBudget(id, limit) {
+  // Atualiza o limite de um budget existente
+  async update(id, limit) {
     return prisma.budget.update({
       where: { id },
       data: { limit: Number(limit) },
     });
-  },
+  }
 
-  async deleteBudget(id) {
+  // Deleta um budget
+  async delete(id) {
     return prisma.budget.delete({
       where: { id },
     });
-  },
-};
+  }
+}
+
+export default new BudgetRepository();

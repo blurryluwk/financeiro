@@ -1,10 +1,10 @@
-const express = require("express");
+import express from "express";
+import BudgetController from "../controllers/budgetController.js";
+
 const router = express.Router();
-const controller = require("../controllers/budgetController");
-const authMiddleware = require("../middleware/auth");
 
-router.get("/", authMiddleware, controller.getBudgets);
-router.post("/", authMiddleware, controller.saveBudget);
-router.delete("/:id", authMiddleware, controller.deleteBudget);
+router.get("/", BudgetController.list);
+router.post("/", BudgetController.createOrUpdate);
+router.delete("/:id", BudgetController.delete);
 
-module.exports = router;
+export default router;
