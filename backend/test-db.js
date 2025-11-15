@@ -1,11 +1,16 @@
 import { PrismaClient } from "@prisma/client";
+
 const prisma = new PrismaClient();
 
-async function main() {
-  const users = await prisma.user.findMany();
-  console.log(users);
+async function testConnection() {
+  try {
+    await prisma.$connect();
+    console.log("✅ Conectado ao banco com sucesso!");
+  } catch (err) {
+    console.error("❌ Erro ao conectar ao banco:", err);
+  } finally {
+    await prisma.$disconnect();
+  }
 }
 
-main()
-  .catch(e => console.error(e))
-  .finally(async () => await prisma.$disconnect());
+testConnection();

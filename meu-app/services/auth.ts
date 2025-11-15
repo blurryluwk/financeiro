@@ -1,11 +1,11 @@
 // services/auth.ts
-import * as SecureStore from "expo-secure-store";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { apiRequest } from "./api";
 
 const TOKEN_KEY = "token";
 const USER_KEY = "user";
 
-// 🔹 LOGIN
+//  LOGIN
 export async function login(email: string, password: string) {
   const response = await apiRequest("/users/login", "POST", { email, password });
 
@@ -14,25 +14,25 @@ export async function login(email: string, password: string) {
   }
 
   await Promise.all([
-    SecureStore.setItemAsync(TOKEN_KEY, response.token),
-    SecureStore.setItemAsync(USER_KEY, JSON.stringify(response.user)),
+    AsyncStorage.setItem(TOKEN_KEY, response.token),
+    AsyncStorage.setItem(USER_KEY, JSON.stringify(response.user)),
   ]);
 
   return response.user;
 }
 
-// 🔹 LOGOUT
+// LOGOUT
 export async function logout() {
   await Promise.all([
-    SecureStore.deleteItemAsync(TOKEN_KEY),
-    SecureStore.deleteItemAsync(USER_KEY),
+    AsyncStorage.removeItem(TOKEN_KEY),
+    AsyncStorage.removeItem(USER_KEY),
   ]);
 }
 
-// 🔹 PEGAR TOKEN
+// PEGAR TOKEN
 export async function getToken() {
   try {
-    return await SecureStore.getItemAsync(TOKEN_KEY);
+    return await AsyncStorage.getItem(TOKEN_KEY);
   } catch (err) {
     console.error("Erro ao obter token:", err);
     return null;
@@ -42,7 +42,7 @@ export async function getToken() {
 // 🔹 PEGAR USUÁRIO
 export async function getUser() {
   try {
-    const storedUser = await SecureStore.getItemAsync(USER_KEY);
+    const storedUser = await AsyncStorage.getItem(USER_KEY);
     if (!storedUser) return null;
     return JSON.parse(storedUser);
   } catch (err) {
@@ -64,8 +64,8 @@ export async function registerUser(data: {
   }
 
   await Promise.all([
-    SecureStore.setItemAsync(TOKEN_KEY, response.token),
-    SecureStore.setItemAsync(USER_KEY, JSON.stringify(response.user)),
+    AsyncStorage.setItem(TOKEN_KEY, response.token),
+    AsyncStorage.setItem(USER_KEY, JSON.stringify(response.user)),
   ]);
 
   return response.user;

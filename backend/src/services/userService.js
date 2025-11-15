@@ -22,13 +22,11 @@ const UserService = {
       data: { name, email, password_hash },
     });
 
-    await UserService.createDefaultCategories(newUser.id);
-
     const token = jwt.sign({ id: newUser.id }, JWT_SECRET, { expiresIn: "7d" });
 
     return {
       user: { id: newUser.id, name: newUser.name, email: newUser.email },
-      token,
+      token,z
     };
   },
 
@@ -76,22 +74,6 @@ const UserService = {
     return await prisma.user.findMany({
       select: { id: true, name: true, email: true },
     });
-  },
-
-  createDefaultCategories: async (userId) => {
-    const defaultCategories = [
-      "Alimentação",
-      "Transporte",
-      "Lazer",
-      "Saúde",
-      "Educação",
-      "Outros",
-      "Salário",
-      "Freelance",
-      "Investimentos",
-    ].map((name) => ({ name, user_id: userId }));
-
-    return await prisma.category.createMany({ data: defaultCategories });
   },
 };
 

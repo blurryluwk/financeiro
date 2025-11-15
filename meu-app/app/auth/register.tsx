@@ -23,23 +23,45 @@ export default function RegisterScreen() {
       return;
     }
 
+    console.log("📝 Tentando registrar usuário...");
+    console.log("📤 Dados enviados:", { name, email, password });
+
     setLoading(true);
+
     try {
       const newUser = await registerUser({ name, email, password });
+      console.log("✅ Usuário registrado com sucesso:", newUser);
+
       Alert.alert("Sucesso", "Cadastro realizado!", [
-        { text: "OK", onPress: () => router.replace("/(tabs)") },
+        {
+          text: "OK",
+          onPress: () => {
+            console.log("🔁 Redirecionando para /tabs");
+            router.replace("/(tabs)");
+          },
+        },
       ]);
     } catch (error: any) {
-      console.error(error);
-      if (error.message.includes("409")) {
+      console.error("🔥 Erro ao registrar:", error);
+
+      // Caso o backend retorne erro de e-mail já existente
+      if (error.message.includes("409") || error.message.includes("unique")) {
         Alert.alert("Erro", "E-mail já cadastrado!");
+      } else if (error.message.includes("Network request failed")) {
+        Alert.alert(
+          "Erro de Conexão",
+          "Não foi possível conectar ao servidor. Verifique se o backend está rodando e acessível via IP."
+        );
       } else {
-        Alert.alert("Erro", "Não foi possível cadastrar o usuário.");
+        Alert.alert(
+          "Erro",
+          error.message || "Não foi possível cadastrar o usuário."
+        );
       }
     } finally {
       setLoading(false);
+      console.log("🕓 Processo de registro finalizado.");
     }
-
   }
 
   return (
