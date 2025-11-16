@@ -16,7 +16,7 @@ const UserController = {
       }
 
       // Cria categorias padrão
-      console.log("🗂️ Categorias padrão criadas:", defaultCategories);
+      console.log("Categorias padrão criadas:", defaultCategories);
 
       // Cria token JWT
       const token = jwt.sign(
@@ -24,7 +24,7 @@ const UserController = {
         process.env.JWT_SECRET || "default_secret",
         { expiresIn: "7d" }
       );
-      console.log("🔑 Token JWT gerado:", token);
+      console.log("Token JWT gerado:", token);
 
       // Retorna apenas dados seguros
       const safeUser = {

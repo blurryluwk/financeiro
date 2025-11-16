@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
-import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, ActivityIndicator, Pressable, Animated } from "react-native";
 import { Transaction } from "@/types/Transaction";
 import { getUser } from "@/services/auth";
 import { apiRequest } from "@/services/api";
+import NewBudgetModal from "./NewBudgetModal";
 
 type Props = {
   transactions: Transaction[];
@@ -12,8 +13,11 @@ export default function BudgetBarChart({ transactions }: Props) {
   const [budgets, setBudgets] = useState<{ [category: string]: number }>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
-  /** carrega budgets do backend usando apiRequest */
+  // Animated values por categoria
+  const [animatedValues, setAnimatedValues] = useState<{ [category: string]: Animated.Value }>({});
+
   const loadBudgets = useCallback(async () => {
     try {
       setLoading(true);
@@ -29,10 +33,18 @@ export default function BudgetBarChart({ transactions }: Props) {
 
       const parsed: { [category: string]: number } = {};
       (data || []).forEach((b: any) => {
-        parsed[b.category] = Number(b.limit);
+        parsed[b.category.name] = Number(b.amount);
       });
 
       setBudgets(parsed);
+
+      // Inicializa Animated.Value para cada categoria
+      const anims: { [category: string]: Animated.Value } = {};
+      Object.keys(parsed).forEach(cat => {
+        anims[cat] = new Animated.Value(0);
+      });
+      setAnimatedValues(anims);
+
     } catch (err: any) {
       console.error("Erro ao carregar budgets:", err.message || err);
       setError("Erro ao carregar orçamentos do usuário.");
@@ -45,29 +57,51 @@ export default function BudgetBarChart({ transactions }: Props) {
     loadBudgets();
   }, [loadBudgets]);
 
-  /** 🔹 Soma despesas por categoria */
   const spentByCategory = useMemo(() => {
     const map: { [cat: string]: number } = {};
-
     transactions.forEach((t) => {
       if (t.type === "expense") {
         const cat = t.category?.name || "Outros";
         map[cat] = (map[cat] || 0) + Math.abs(t.amount);
       }
     });
-
     return map;
   }, [transactions]);
 
-  /** 🔹 Cores das barras */
   const getBarColor = (percent: number) => {
-    if (percent > 100) return "#ce1e15ff"; // vermelho
+    if (percent > 100) return "#e92a20ff"; // vermelho
     if (percent > 75) return "#ff9500ff"; // laranja
-    if (percent > 50) return "#fbff0aff"; // amarelo
+    if (percent > 50) return "#f5e769ff"; // amarelo
     return "#69c44eff"; // verde
   };
 
- if (loading) {
+  const handleAddBudget = async (data: { user_id: number; category_id: number; amount: number }) => {
+    const payload = {
+      userId: data.user_id,
+      category: data.category_id,
+      amount: data.amount,
+    };
+    await apiRequest("/budgets", "POST", payload);
+  };
+
+  // Animação sequencial das barras
+  useEffect(() => {
+    const categories = Object.keys(animatedValues);
+    categories.forEach((cat, index) => {
+      const amount = budgets[cat];
+      const spent = spentByCategory[cat] || 0;
+      const percent = Math.min((spent / amount) * 100, 100);
+
+      Animated.timing(animatedValues[cat], {
+        toValue: percent,
+        duration: 800,
+        delay: index * 150, // delay para animação em sequência
+        useNativeDriver: false,
+      }).start();
+    });
+  }, [animatedValues, budgets, spentByCategory]);
+
+  if (loading) {
     return (
       <View style={styles.loadingBox}>
         <ActivityIndicator size="small" color="#4695a0" />
@@ -86,40 +120,60 @@ export default function BudgetBarChart({ transactions }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Orçamentos por Categoria</Text>
+      <View style={styles.headerRow}>
+        <Text style={styles.title}>Orçamentos por Categoria</Text>
+        <Pressable
+          style={styles.addButton}
+          onPress={() => setModalVisible(true)}
+          accessibilityLabel="Adicionar novo orçamento"
+        >
+          <Text style={styles.addButtonText}>+</Text>
+        </Pressable>
+      </View>
 
       {Object.keys(budgets).map((category) => {
-        const limit = budgets[category];
+        const amount = budgets[category];
         const spent = spentByCategory[category] || 0;
-        const percent = (spent / limit) * 100;
-        const barWidth = Math.min(percent, 100);
+        const percent = (spent / amount) * 100;
 
         return (
           <View key={category} style={styles.item}>
             <View style={styles.row}>
               <Text style={styles.category}>{category}</Text>
               <Text style={styles.value}>
-                R$ {spent.toFixed(2)} / R$ {limit.toFixed(2)}
+                R$ {spent.toFixed(2)} / R$ {amount.toFixed(2)}
               </Text>
             </View>
 
             <View style={styles.barBackground}>
-              <View
+              <Animated.View
                 style={[
                   styles.barFill,
-                  { width: `${barWidth}%`, backgroundColor: getBarColor(percent) },
+                  {
+                    width: animatedValues[category]?.interpolate({
+                      inputRange: [0, 100],
+                      outputRange: ["0%", "100%"],
+                    }) || "0%",
+                    backgroundColor: getBarColor(percent),
+                  },
                 ]}
               />
             </View>
 
             {percent > 100 && (
               <Text style={styles.exceededText}>
-                ⚠️ Excedeu {Math.round(percent - 100)}% (R$ {(spent - limit).toFixed(2)})
+                ⚠️ Excedeu {Math.round(percent - 100)}% (R$ {(spent - amount).toFixed(2)})
               </Text>
             )}
           </View>
         );
       })}
+
+      <NewBudgetModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        onAdd={handleAddBudget}
+      />
     </View>
   );
 }
@@ -132,19 +186,32 @@ const styles = StyleSheet.create({
   },
   container: {
     marginTop: 25,
-    backgroundColor: "#fff",
-    padding: 16,
-    borderRadius: 10,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
+    paddingBottom: 20,
+  },
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 14,
   },
   title: {
     fontSize: 18,
     fontWeight: "bold",
-    marginBottom: 14,
     color: "#333",
+  },
+  addButton: {
+    backgroundColor: "#4695a0",
+    borderRadius: 20,
+    width: 32,
+    height: 32,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  addButtonText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 24,
+    lineHeight: 24,
   },
   item: {
     marginBottom: 20,
@@ -174,7 +241,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   exceededText: {
-    color: "#ff3b30",
+    color: "#e92a20ff",
     marginTop: 5,
     fontWeight: "600",
   },

@@ -421,7 +421,7 @@ const styles = StyleSheet.create({
   filterButtonText: { color: "#fff", fontWeight: "bold" },
   newButton: { paddingHorizontal: 15, paddingVertical: 5, backgroundColor: "#8fccb6ff", borderRadius: 8, marginRight: 10, justifyContent: "center", alignItems: "center" },
   newButtonText: { color: "#333", fontWeight: "bold", fontSize: 24, lineHeight: 28 },
-  logoutButton: { marginLeft: 10, paddingHorizontal: 10, paddingVertical: 5, backgroundColor: "#ff3b30", borderRadius: 8 },
+  logoutButton: { marginLeft: 10, paddingHorizontal: 10, paddingVertical: 5, backgroundColor: "#e92a20ff", borderRadius: 8 },
   logoutText: { color: "#fff", fontWeight: "bold" },
   emptyText: { textAlign: "center", marginTop: 50, fontSize: 16, color: "#666" },
   centered: { flex: 1, justifyContent: "center", alignItems: "center" },

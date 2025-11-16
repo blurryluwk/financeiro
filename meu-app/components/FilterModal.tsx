@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
-    maxHeight: "80%", // Limita a altura do modal
+    maxHeight: "80%", // limita a altura do modal
   },
   modalTitle: {
     fontSize: 20,

@@ -5,17 +5,17 @@ class BudgetService {
     return BudgetRepository.findAllByUser(userId);
   }
 
-  async save(userId, category, limit) {
+  async save(userId, category, amount) {
     const existing = await BudgetRepository.findByUserAndCategory(
       userId,
       category
     );
 
     if (existing) {
-      return BudgetRepository.update(existing.id, limit);
+      return BudgetRepository.update(existing.id, amount);
     }
 
-    return BudgetRepository.create(userId, category, limit);
+    return BudgetRepository.create(userId, category, amount);
   }
 
   async delete(id) {

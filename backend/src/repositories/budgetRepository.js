@@ -19,21 +19,21 @@ class BudgetRepository {
   }
 
   // Cria um novo budget
-  async create(user_id, category_id, limit) {
+  async create(user_id, category_id, amount) {
     return prisma.budget.create({
       data: {
         user_id,
         category_id,
-        limit: Number(limit),
+        amount: Number(amount),
       },
     });
   }
 
   // Atualiza o limite de um budget existente
-  async update(id, limit) {
+  async update(id, amount) {
     return prisma.budget.update({
       where: { id },
-      data: { limit: Number(limit) },
+      data: { amount: Number(amount) },
     });
   }
 

@@ -19,16 +19,16 @@ class BudgetController {
 
   async createOrUpdate(req, res) {
     try {
-      const { userId, category, limit } = req.body;
+      const { userId, category, amount } = req.body;
 
-      if (!userId || !category || !limit) {
+      if (!userId || !category || !amount) {
         return res.status(400).json({ error: "Dados incompletos." });
       }
 
       const result = await BudgetService.save(
         Number(userId),
         category,
-        Number(limit)
+        Number(amount)
       );
 
       res.json(result);

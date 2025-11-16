@@ -114,31 +114,32 @@ const NewTransactionModal: React.FC<NewTransactionModalProps> = ({
     setSelectedCategory(cat);
   };
 
-  const handleSave = () => { // Mudança para handleSave sem async, pois o POST é feito no pai
-    if (isSaving) return;
-    setIsSaving(true);
+const handleSave = () => {
+  if (isSaving) return;
+  setIsSaving(true);
 
-    const parsedAmount = parseFloat(amount.replace(",", "."));
+  const parsedAmount = parseFloat(amount.replace(",", "."));
 
-    if (!description || isNaN(parsedAmount) || parsedAmount <= 0 || !selectedCategory) {
-      Alert.alert("Erro", "Preencha todos os campos corretamente.");
-      setIsSaving(false);
-      return;
-    }
-    
-    // ✅ Envia os dados para o componente pai
-    onSave({
-        description,
-        amount: parsedAmount,
-        type,
-        category: selectedCategory.name,
-        date: date, // Usa o estado 'date' que foi preenchido
-    });
-
-    // Limpa e fecha modal
+  if (!description || isNaN(parsedAmount) || parsedAmount <= 0 || !selectedCategory) {
+    Alert.alert("Erro", "Preencha todos os campos corretamente.");
     setIsSaving(false);
-    onClose();
-  };
+    return;
+  }
+
+  // 🔹 envia os dados para o pai (Dashboard)
+  onSave({
+    description,
+    amount: parsedAmount,
+    type,
+    category: selectedCategory.name,
+    date,
+  });
+
+  // Limpa e fecha modal
+  setIsSaving(false);
+  onClose();
+};
+
 
   return (
     <Modal animationType="slide" transparent visible={isVisible}>
