@@ -80,63 +80,63 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 );
 
 const confirmationStyles = StyleSheet.create({
-    overlay: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    },
-    modalView: {
-        width: 300,
-        backgroundColor: 'white',
-        borderRadius: 12,
-        padding: 20,
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 4,
-        elevation: 5,
-    },
-    title: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginBottom: 10,
-        textAlign: 'center',
-    },
-    message: {
-        fontSize: 15,
-        textAlign: 'center',
-        marginBottom: 20,
-        color: '#666',
-    },
-    actions: {
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        width: '100%',
-    },
-    confirmButton: {
-        backgroundColor: '#ff3b30', // Vermelho para exclusão
-        padding: 10,
-        borderRadius: 8,
-        width: '45%',
-        alignItems: 'center',
-    },
-    confirmButtonText: {
-        color: 'white',
-        fontWeight: 'bold',
-    },
-    cancelButton: {
-        backgroundColor: '#f0f0f0',
-        padding: 10,
-        borderRadius: 8,
-        width: '45%',
-        alignItems: 'center',
-    },
-    cancelButtonText: {
-        color: '#333',
-        fontWeight: 'bold',
-    },
+  overlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+  },
+  modalView: {
+    width: 300,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 20,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  message: {
+    fontSize: 15,
+    textAlign: 'center',
+    marginBottom: 20,
+    color: '#666',
+  },
+  actions: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+  },
+  confirmButton: {
+    backgroundColor: '#ff3b30', // Vermelho para exclusão
+    padding: 10,
+    borderRadius: 8,
+    width: '45%',
+    alignItems: 'center',
+  },
+  confirmButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  cancelButton: {
+    backgroundColor: '#f0f0f0',
+    padding: 10,
+    borderRadius: 8,
+    width: '45%',
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    color: '#333',
+    fontWeight: 'bold',
+  },
 });
 
 // ----------------------------------------------------------------------
@@ -154,7 +154,7 @@ export default function TabOneScreen() {
   const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
   const [isNewTransactionModalVisible, setIsNewTransactionModalVisible] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<TransactionState | null>(null);
-  
+
   // 🔑 NOVOS ESTADOS PARA O MODAL DE CONFIRMAÇÃO CUSTOMIZADO
   const [isConfirmationModalVisible, setIsConfirmationModalVisible] = useState(false);
   const [transactionIdToDelete, setTransactionIdToDelete] = useState<number | null>(null);
@@ -193,7 +193,7 @@ export default function TabOneScreen() {
         categoryId: t.category?.id || 0,
       }));
 
-      setTransactions(safeData); 
+      setTransactions(safeData);
 
     } catch (err: any) {
       console.error("Erro ao carregar transações:", err);
@@ -222,12 +222,12 @@ export default function TabOneScreen() {
     // Fecha o modal de edição (se estiver aberto por algum erro de fluxo)
     setIsNewTransactionModalVisible(false);
     setEditingTransaction(null);
-    
+
     // Configura o modal de confirmação
     setTransactionIdToDelete(id);
     setIsConfirmationModalVisible(true);
   };
-  
+
   // FUNÇÃO DE EXECUÇÃO DA EXCLUSÃO (Passo 2: Roda após a confirmação no modal)
   const executeDeleteTransaction = async () => {
     if (!transactionIdToDelete) return;
@@ -235,7 +235,7 @@ export default function TabOneScreen() {
     const idToDelete = transactionIdToDelete; // Guarda o ID
 
     // 1. Fecha o modal de confirmação
-    setIsConfirmationModalVisible(false); 
+    setIsConfirmationModalVisible(false);
     setTransactionIdToDelete(null); // Limpa o estado imediatamente
 
     try {
@@ -280,7 +280,7 @@ export default function TabOneScreen() {
 
       const isEditing = editingTransaction !== null;
       let endpoint = "/transactions";
-      let method: HttpMethod = "POST"; 
+      let method: HttpMethod = "POST";
 
       if (isEditing) {
         endpoint = `/transactions/${editingTransaction!.id}`;
@@ -290,11 +290,11 @@ export default function TabOneScreen() {
       await authRequest(endpoint, method, payload);
 
       Alert.alert("Sucesso", isEditing ? "Transação atualizada!" : "Transação salva!");
-      
+
       setIsNewTransactionModalVisible(false);
-      setEditingTransaction(null); 
+      setEditingTransaction(null);
       loadTransactions();
-      
+
     } catch (err: any) {
       console.error("Erro ao salvar/atualizar transação:", err);
       Alert.alert("Erro", err.message || "Não foi possível salvar/atualizar a transação.");
@@ -303,12 +303,12 @@ export default function TabOneScreen() {
 
   // Logout (Mantido)
   const handleLogout = async () => {
-     try {
-       await logout();
-       router.replace("/");
-     } catch (e) {
-       console.error("Erro no logout:", e);
-     }
+    try {
+      await logout();
+      router.replace("/");
+    } catch (e) {
+      console.error("Erro no logout:", e);
+    }
   };
 
 
@@ -369,12 +369,14 @@ export default function TabOneScreen() {
             date={item.date}
             type={item.type}
             category={item.categoryName}
-            onPress={() => handleEditTransaction(item)} 
-            onDelete={() => handleDeleteTransaction(item.id)} // Chama a função que abre o modal customizado
+            onPress={() => handleEditTransaction(item)}
+            onDelete={() => handleDeleteTransaction(item.id)}
+            showDelete={true}   // <-- Agora passamos verdadeiro
           />
         )}
         ListEmptyComponent={() => <Text style={styles.emptyText}>Nenhuma transação encontrada.</Text>}
       />
+
 
       <FilterModal
         isVisible={isFilterModalVisible}
@@ -392,14 +394,14 @@ export default function TabOneScreen() {
         }}
         onSave={handleSaveNewOrUpdateTransaction}
         initialData={editingTransaction ? {
-            description: editingTransaction.description,
-            amount: editingTransaction.amount,
-            date: editingTransaction.date,
-            type: editingTransaction.type,
-            category: editingTransaction.categoryName,
+          description: editingTransaction.description,
+          amount: editingTransaction.amount,
+          date: editingTransaction.date,
+          type: editingTransaction.type,
+          category: editingTransaction.categoryName,
         } : undefined}
       />
-      
+
       {/* 🔑 NOVO MODAL DE CONFIRMAÇÃO */}
       <ConfirmationModal
         isVisible={isConfirmationModalVisible}

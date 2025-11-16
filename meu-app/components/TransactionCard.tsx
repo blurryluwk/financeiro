@@ -1,9 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-// Certifique-se de instalar este pacote: expo install @expo/vector-icons
 import { Feather } from '@expo/vector-icons'; 
 
-// 1. ATUALIZAÇÃO DA INTERFACE DE PROPS
 type TransactionCardProps = {
   description: string;
   amount: number;
@@ -11,9 +9,9 @@ type TransactionCardProps = {
   type: 'income' | 'expense';
   category: string;
   
-  // NOVAS PROPS para interação:
   onPress: () => void;
-  onDelete: () => void;
+  onDelete?: () => void;   // Tornamos opcional
+  showDelete?: boolean;    // Nova prop para controlar exibição do lixeiro
 };
 
 const TransactionCard: React.FC<TransactionCardProps> = ({
@@ -22,14 +20,13 @@ const TransactionCard: React.FC<TransactionCardProps> = ({
   date,
   type,
   category,
-  onPress,    // Recebe o callback para edição
-  onDelete,   // Recebe o callback para exclusão
+  onPress,
+  onDelete,
+  showDelete = false, // padrão: não mostrar
 }) => {
-  const amountColor = type === "income" ? "#10ac84" : "#ff4757"; // Cores mais vibrantes
-  
+  const amountColor = type === "income" ? "#10ac84" : "#ff4757";
 
   return (
-    // 2. ENCAPSULA O CONTEÚDO PRINCIPAL PARA HABILITAR EDIÇÃO (onPress)
     <View style={styles.outerContainer}>
         <TouchableOpacity style={styles.card} onPress={onPress}>
             <View style={styles.info}>
@@ -44,14 +41,16 @@ const TransactionCard: React.FC<TransactionCardProps> = ({
             </View>
         </TouchableOpacity>
 
-        {/* 3. BOTÃO DE EXCLUSÃO SEPARADO COM ÍCONE */}
-        <TouchableOpacity 
-            style={styles.deleteButton} 
-            onPress={onDelete}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} // Aumenta a área de clique
-        >
-            <Feather name="trash-2" size={20} color="#ff3b30" />
-        </TouchableOpacity>
+        {/* Botão de exclusão opcional */}
+        {showDelete && onDelete && (
+          <TouchableOpacity 
+              style={styles.deleteButton} 
+              onPress={onDelete}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+              <Feather name="trash-2" size={20} color="#ff3b30" />
+          </TouchableOpacity>
+        )}
     </View>
   );
 };
@@ -72,12 +71,11 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
   },
   card: {
-    // Ocupa a maior parte do espaço e mantém os detalhes e o valor
     flex: 1, 
     flexDirection: 'row',
     justifyContent: 'space-between',
     padding: 15,
-    paddingRight: 5, // Espaço ajustado para o botão de lixeira
+    paddingRight: 5,
   },
   info: {
     flexDirection: 'column',

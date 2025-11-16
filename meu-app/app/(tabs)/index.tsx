@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   ScrollView,
@@ -8,14 +8,14 @@ import {
   StyleSheet,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
+
 import { getUser, logout, authRequest } from "@/services/auth";
 import CategoryChart from "@/components/CategoryChart";
 import BudgetBarChart from "@/components/BudgetBarChart";
 import TransactionList from "@/components/TransactionList";
-import NewBudgetModal from "@/components/NewBudgetModal";
 import { Text } from "@/components/Themed";
 import { Transaction } from "@/types/Transaction";
-
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -61,9 +61,12 @@ export default function DashboardScreen() {
     }
   }, [router]);
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  // 🔹 Atualizar dados sempre que a aba ganhar foco
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [loadData])
+  );
 
   // Logout
   const handleLogout = async () => {
@@ -97,34 +100,36 @@ export default function DashboardScreen() {
   }
 
   return (
-  <ScrollView style={styles.container}>
-    <View style={styles.header}>
-      <Text style={styles.title}>Dashboard de {userName}</Text>
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Text style={styles.logoutText}>Sair</Text>
-      </TouchableOpacity>
-    </View>
+    <ScrollView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Dashboard de {userName}</Text>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <Text style={styles.logoutText}>Sair</Text>
+        </TouchableOpacity>
+      </View>
 
-    {/* Gráficos */}
-    <CategoryChart transactions={transactions} />
-    <BudgetBarChart transactions={transactions}/>
+      {/* Gráficos */}
+      <CategoryChart transactions={transactions} />
+      <BudgetBarChart transactions={transactions} />
 
-    {/* Últimas 3 transações */}
-    <View style={{ marginVertical: 20 }}>
-      <Text style={styles.subtitle}>Últimas 3 transações</Text>
-      {transactions.length > 0 ? (
-        <TransactionList
-          transactions={transactions
-            .slice() // cria uma cópia
-            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) // mais recentes primeiro
-            .slice(0, 3) // pega apenas 3
-          }
-        />
-      ) : (
-        <Text style={styles.noDataText}>Nenhuma transação registrada</Text>
-      )}
-    </View>
-  </ScrollView>
+      {/* Últimas 3 transações */}
+      <View style={{ marginVertical: 20 }}>
+        <Text style={styles.subtitle}>Transações Recentes</Text>
+        {transactions.length > 0 ? (
+          <TransactionList
+            transactions={transactions
+              .slice() // cria uma cópia
+              .sort(
+                (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+              ) // mais recentes primeiro
+              .slice(0, 3) // pega apenas 3
+            }
+          />
+        ) : (
+          <Text style={styles.noDataText}>Nenhuma transação registrada</Text>
+        )}
+      </View>
+    </ScrollView>
   );
 }
 
@@ -164,16 +169,15 @@ const styles = StyleSheet.create({
   },
   reloadText: { color: "#fff", fontWeight: "600" },
   subtitle: {
-  fontSize: 18,
-  fontWeight: "600",
-  marginBottom: 10,
-  fontFamily: "System",
-},
-  noDataText: {  
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 10,
+    fontFamily: "System",
+  },
+  noDataText: {
     textAlign: "center",
     marginTop: 20,
     color: "#777",
     fontFamily: "System",
   },
 });
-
