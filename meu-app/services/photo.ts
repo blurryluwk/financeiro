@@ -1,7 +1,7 @@
 // services/photo.ts
 import { apiRequest } from "./api"; // importa função genérica
 
-export const uploadProfilePhoto = async (payload: { userId: string; base64: string }) => {
+export const uploadProfilePicture = async (payload: { userId: string; base64: string }) => {
   try {
     // Chama a API passando endpoint, método e corpo
     const data = await apiRequest(`/profile_photos/${payload.userId}`, "POST", {

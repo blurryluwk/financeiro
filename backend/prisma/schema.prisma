@@ -21,6 +21,7 @@ model User {
   categories   Category[]
   transactions Transaction[]
   budgets  Budget[]
+  profilePicture    ProfilePicture?
 
   @@map("users")
 }
@@ -65,3 +66,12 @@ model Budget {
   @@map("budgets")
 }
 
+//Fotos de Perfil
+model ProfilePicture {
+  user_id     Int       @id @map("user_id")
+  photo       Bytes     @map("photo")
+  uploaded_at DateTime  @default(now()) @map("uploaded_at")
+  user        User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("profile_photos")
+}

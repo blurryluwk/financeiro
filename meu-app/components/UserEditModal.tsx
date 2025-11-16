@@ -13,7 +13,7 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import { updateUser } from "@/services/auth"; // função que envia dados
 import Colors from "@/constants/Colors";
-// import { uploadProfilePhoto } from "@/services/photo"; // Função de upload removida/comentada
+// import { uploadProfilePicture } from "@/services/photo"; // Função de upload removida/comentada
 
 type UserEditModalProps = {
     visible: boolean;
