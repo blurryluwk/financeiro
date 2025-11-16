@@ -91,7 +91,7 @@ export default function DashboardScreen() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Dashboard de {userName}</Text>
+        <Text style={styles.title}>Dashboard</Text>
       </View>
 
       {/* Gráficos */}

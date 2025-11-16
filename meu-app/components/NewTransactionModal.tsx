@@ -180,7 +180,6 @@ const handleSave = () => {
             <Text style={styles.label}>Categoria:</Text>
             <ScrollView
               horizontal
-              showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.categoryScrollContainer}
             >
               {categoriesData.map((cat) => (

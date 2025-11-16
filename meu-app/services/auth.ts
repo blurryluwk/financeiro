@@ -5,6 +5,11 @@ import { apiRequest } from "./api";
 const TOKEN_KEY = "token";
 const USER_KEY = "user";
 
+type UpdateUserPayload = {
+  userId: string;
+  name?: string;
+};
+
 //  LOGIN
 export async function login(email: string, password: string) {
   const response = await apiRequest("/users/login", "POST", { email, password });
@@ -91,3 +96,29 @@ export async function authRequest(
     throw err;
   }
 }
+
+// ATUALIZAR USUÁRIO
+// services/auth.ts (Apenas a função updateUser)
+
+// ATUALIZAR USUÁRIO
+export const updateUser = async (payload: UpdateUserPayload) => {
+  const { userId, ...data } = payload;
+  
+  const endpoint = `/users/${userId}`;
+
+  try {
+    // 1. Chama a API (authRequest cuida da URL, token e headers)
+    const updatedUser = await authRequest(endpoint, "PUT", data);
+    
+    // Salva o novo objeto de usuário retornado pela API
+    await AsyncStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
+    
+    // O retorno dessa função (updatedUser) é usado no componente pai (TabLayout)
+    // para atualizar o estado do nome (userName/user).
+    return updatedUser;
+    
+  } catch (error) {
+    console.error("Erro ao atualizar o usuário:", error);
+    throw error; // Propaga o erro para ser tratado no modal/componente
+  }
+};

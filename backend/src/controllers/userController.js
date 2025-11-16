@@ -6,7 +6,6 @@ const UserController = {
     try {
       console.log("📩 BODY recebido para registro:", req.body);
 
-      // Chama o serviço de registro
       const newUser = await UserService.register(req.body);
       console.log("✅ Retorno do UserService.register:", newUser);
 
@@ -15,10 +14,6 @@ const UserController = {
         return res.status(400).json({ error: "Falha ao criar usuário" });
       }
 
-      // Cria categorias padrão
-      console.log("Categorias padrão criadas:", defaultCategories);
-
-      // Cria token JWT
       const token = jwt.sign(
         { id: newUser.id, email: newUser.email },
         process.env.JWT_SECRET || "default_secret",
@@ -26,7 +21,6 @@ const UserController = {
       );
       console.log("Token JWT gerado:", token);
 
-      // Retorna apenas dados seguros
       const safeUser = {
         id: newUser.id,
         name: newUser.name,
@@ -72,6 +66,43 @@ const UserController = {
       return res.status(500).json({ error: "Erro ao listar usuários" });
     }
   },
+
+updateUser: async (req, res) => {
+    const { id } = req.params;
+    const { name } = req.body;
+
+    console.log("📩 Requisição para atualizar usuário:", id, "com:", req.body);
+
+    // Validação simples
+    if (!name || typeof name !== "string") {
+      console.log("⚠️ Falha na validação do 'name'. Campos inválidos:", req.body);
+      return res.status(400).json({ error: "Campo 'name' é obrigatório e deve ser uma string" });
+    }
+
+    try {
+      console.log("✅ Validação concluída. Atualizando usuário...");
+
+      const updatedUser = await UserService.updateUser(id, { name });
+
+      if (!updatedUser) {
+        console.log("⚠️ Usuário não encontrado para atualização. ID:", id);
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+
+      // Retorna apenas dados seguros
+      const safeUser = {
+        id: updatedUser.id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+      };
+
+      console.log("✅ Usuário atualizado com sucesso:", safeUser);
+      return res.json(safeUser);
+    } catch (error) {
+      console.error("🔥 Erro ao atualizar usuário:", error);
+      return res.status(500).json({ error: "Erro ao atualizar usuário" });
+    }
+  }
 };
 
 export default UserController;

@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
-const JWT_SECRET = process.env.JWT_SECRET || "umsegurosegredo123";
+const JWT_SECRET = process.env.JWT_SECRET || "zzzdefault_secret";
 
 const UserService = {
   register: async ({ name, email, password }) => {
@@ -26,7 +26,7 @@ const UserService = {
 
     return {
       user: { id: newUser.id, name: newUser.name, email: newUser.email },
-      token,z
+      token,
     };
   },
 
@@ -74,6 +74,36 @@ const UserService = {
     return await prisma.user.findMany({
       select: { id: true, name: true, email: true },
     });
+  },
+
+  updateUser: async (userId, data) => {
+    if (!data.name) {
+      throw { status: 400, message: "O nome é obrigatório para atualização" };
+    }
+
+    // ✅ CORREÇÃO AQUI: Converter o userId de String para Int
+    const idAsInt = parseInt(userId);
+
+    // Validação extra para garantir que a conversão foi bem-sucedida
+    if (isNaN(idAsInt)) {
+      throw { status: 400, message: "ID de usuário inválido." };
+    }
+
+    try {
+      const updatedUser = await prisma.user.update({
+        where: { id: idAsInt }, // Use o ID convertido para Int
+        data: { name: data.name },
+        select: { id: true, name: true, email: true },
+      });
+
+      return updatedUser;
+    } catch (error) {
+      if (error.code === 'P2025') {
+        throw { status: 404, message: "Usuário não encontrado." };
+      }
+      console.error("Erro no UserService.updateUser:", error);
+      throw { status: 500, message: "Erro ao atualizar o usuário no banco de dados." };
+    }
   },
 };
 
