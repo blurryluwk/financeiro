@@ -4,13 +4,19 @@ import { Transaction } from "@/types/Transaction";
 import { getUser } from "@/services/auth";
 import { apiRequest } from "@/services/api";
 import NewBudgetModal from "./NewBudgetModal";
+import { Feather } from '@expo/vector-icons';
 
 type Props = {
   transactions: Transaction[];
 };
 
+type BudgetItem = {
+  id: number;
+  amount: number;
+};
+
 export default function BudgetBarChart({ transactions }: Props) {
-  const [budgets, setBudgets] = useState<{ [category: string]: number }>({});
+  const [budgets, setBudgets] = useState<{ [category: string]: BudgetItem }>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -31,9 +37,11 @@ export default function BudgetBarChart({ transactions }: Props) {
 
       const data = await apiRequest(`/budgets?userId=${user.id}`, "GET");
 
-      const parsed: { [category: string]: number } = {};
+      const parsed: { [category: string]: BudgetItem } = {};
       (data || []).forEach((b: any) => {
-        parsed[b.category.name] = Number(b.amount);
+        if (b.category?.name && b.id && b.amount != null) {
+          parsed[b.category.name] = { id: b.id, amount: Number(b.amount) };
+        }
       });
 
       setBudgets(parsed);
@@ -82,15 +90,41 @@ export default function BudgetBarChart({ transactions }: Props) {
       amount: data.amount,
     };
     await apiRequest("/budgets", "POST", payload);
+    loadBudgets(); // recarrega os budgets após adicionar
+  };
+
+  const handleDeleteBudget = async (category: string) => {
+    try {
+      const budget = budgets[category];
+      if (!budget?.id) return;
+
+      await apiRequest(`/budgets/${budget.id}`, "DELETE");
+
+      // Atualiza o state local removendo o budget deletado
+      setBudgets(prev => {
+        const newBudgets = { ...prev };
+        delete newBudgets[category];
+        return newBudgets;
+      });
+
+      // Remove o Animated.Value correspondente
+      setAnimatedValues(prev => {
+        const newAnims = { ...prev };
+        delete newAnims[category];
+        return newAnims;
+      });
+    } catch (err) {
+      console.error("Erro ao deletar budget:", err);
+    }
   };
 
   // Animação sequencial das barras
   useEffect(() => {
     const categories = Object.keys(animatedValues);
     categories.forEach((cat, index) => {
-      const amount = budgets[cat];
+      const amount = budgets[cat]?.amount || 0;
       const spent = spentByCategory[cat] || 0;
-      const percent = Math.min((spent / amount) * 100, 100);
+      const percent = amount > 0 ? Math.min((spent / amount) * 100, 100) : 0;
 
       Animated.timing(animatedValues[cat], {
         toValue: percent,
@@ -132,17 +166,28 @@ export default function BudgetBarChart({ transactions }: Props) {
       </View>
 
       {Object.keys(budgets).map((category) => {
-        const amount = budgets[category];
+        const budget = budgets[category];
+        const amount = budget?.amount || 0;
         const spent = spentByCategory[category] || 0;
-        const percent = (spent / amount) * 100;
+        const percent = amount > 0 ? (spent / amount) * 100 : 0;
 
         return (
           <View key={category} style={styles.item}>
             <View style={styles.row}>
               <Text style={styles.category}>{category}</Text>
-              <Text style={styles.value}>
-                R$ {spent.toFixed(2)} / R$ {amount.toFixed(2)}
-              </Text>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Text style={styles.value}>
+                  R$ {spent.toFixed(2)} / R$ {amount.toFixed(2)}
+                </Text>
+
+                <Pressable
+                  onPress={() => handleDeleteBudget(category)}
+                  style={{ marginLeft: 10 }}
+                  accessibilityLabel={`Excluir orçamento de ${category}`}
+                >
+                  <Feather name="trash-2" size={20} color="#585858ff" />
+                </Pressable>
+              </View>
             </View>
 
             <View style={styles.barBackground}>
@@ -200,7 +245,7 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   addButton: {
-    backgroundColor: "#4695a0",
+    backgroundColor: "#b9b9b9ff",
     borderRadius: 20,
     width: 32,
     height: 32,

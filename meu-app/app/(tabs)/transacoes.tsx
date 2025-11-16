@@ -301,16 +301,6 @@ export default function TabOneScreen() {
     }
   };
 
-  // Logout (Mantido)
-  const handleLogout = async () => {
-    try {
-      await logout();
-      router.replace("/");
-    } catch (e) {
-      console.error("Erro no logout:", e);
-    }
-  };
-
 
   // Renderização de Estados de Carregamento/Erro (Mantido)
   if (loading) {
@@ -349,12 +339,6 @@ export default function TabOneScreen() {
             onPress={() => setIsFilterModalVisible(true)}
           >
             <Text style={styles.filterButtonText}>Filtrar</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.logoutButton}
-            onPress={handleLogout}
-          >
-            <Text style={styles.logoutText}>Sair</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -423,8 +407,6 @@ const styles = StyleSheet.create({
   filterButtonText: { color: "#fff", fontWeight: "bold" },
   newButton: { paddingHorizontal: 15, paddingVertical: 5, backgroundColor: "#8fccb6ff", borderRadius: 8, marginRight: 10, justifyContent: "center", alignItems: "center" },
   newButtonText: { color: "#333", fontWeight: "bold", fontSize: 24, lineHeight: 28 },
-  logoutButton: { marginLeft: 10, paddingHorizontal: 10, paddingVertical: 5, backgroundColor: "#e92a20ff", borderRadius: 8 },
-  logoutText: { color: "#fff", fontWeight: "bold" },
   emptyText: { textAlign: "center", marginTop: 50, fontSize: 16, color: "#666" },
   centered: { flex: 1, justifyContent: "center", alignItems: "center" },
   errorText: { color: "red", fontSize: 16, textAlign: "center", marginBottom: 10 },

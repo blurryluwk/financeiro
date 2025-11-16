@@ -68,17 +68,6 @@ export default function DashboardScreen() {
     }, [loadData])
   );
 
-  // Logout
-  const handleLogout = async () => {
-    try {
-      await logout();
-      Alert.alert("Logout", "Você saiu da sua conta.");
-      router.replace("/auth/login");
-    } catch (err) {
-      console.error("Erro ao sair:", err);
-    }
-  };
-
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -103,9 +92,6 @@ export default function DashboardScreen() {
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Dashboard de {userName}</Text>
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.logoutText}>Sair</Text>
-        </TouchableOpacity>
       </View>
 
       {/* Gráficos */}
@@ -147,13 +133,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   title: { fontSize: 22, fontWeight: "bold" },
-  logoutButton: {
-    backgroundColor: "#ce1e15ff",
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-  },
-  logoutText: { color: "#fff", fontWeight: "bold" },
   centered: { flex: 1, justifyContent: "center", alignItems: "center" },
   errorText: {
     color: "red",
