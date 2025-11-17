@@ -12,29 +12,36 @@ export async function apiRequest(
   tokenParam?: string
 ) {
   const url = `${API_BASE_URL}${endpoint}`;
+  const isFormData = body instanceof FormData; // 👈 NOVIDADE: Verifica se o corpo é FormData
 
   try {
-    // Recupera token JWT (se disponível)
     const token = tokenParam || (await getToken());
 
     // Monta cabeçalhos
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-    };
-    if (token) headers.Authorization = `Bearer ${token}`;
+    const headers: Record<string, string> = {};
+    
+    // ⚠️ CORREÇÃO CRÍTICA: SÓ DEFINE Content-Type SE NÃO FOR FormData
+    if (!isFormData) {
+      headers["Content-Type"] = "application/json";
+    }
 
+    if (token) headers.Authorization = `Bearer ${token}`;
+    
     // Configurações da requisição
     const options: RequestInit = {
       method,
       headers,
-      body: body && method !== "GET" ? JSON.stringify(body) : undefined,
+      // ⚠️ CORREÇÃO CRÍTICA: Envia o corpo diretamente se for FormData
+      body: body && method !== "GET" 
+            ? (isFormData ? body : JSON.stringify(body)) 
+            : undefined,
     };
 
     // Log detalhado da requisição
     console.log("🌐 Enviando requisição:");
     console.log("➡️ URL:", url);
     console.log("➡️ Método:", method);
-    if (body) console.log("➡️ Corpo:", body);
+    if (body) console.log("➡️ Corpo:", isFormData ? "[FormData Object]" : body); 
     if (token) console.log("🔑 Token enviado:", token.slice(0, 10) + "...");
 
     // Envia a requisição

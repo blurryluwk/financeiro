@@ -16,7 +16,7 @@ const UserController = {
 
       const token = jwt.sign(
         { id: newUser.id, email: newUser.email },
-        process.env.JWT_SECRET || "default_secret",
+        process.env.JWT_SECRET || "zzz",
         { expiresIn: "7d" }
       );
       console.log("Token JWT gerado:", token);

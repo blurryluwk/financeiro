@@ -155,13 +155,13 @@ export default function TabLayout() {
           }}
         />
         <Tabs.Screen
-          name="wallet"
+          name="notificacoes"
           options={{
-            title: "Carteira",
+            title: userName ? userName : "Notificações",
             tabBarIcon: ({ color, size }) => (
               <TabBarIcon
                 family={FontAwesome6}
-                name="coins"
+                name="bell"
                 color={color}
                 size={size}
               />

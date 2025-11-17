@@ -1,17 +1,49 @@
 // services/photo.ts
-import { apiRequest } from "./api"; // importa função genérica
+import { Platform } from "react-native";
+import { apiRequest } from "./api"; // Assumindo que apiRequest está em './api'
 
-export const uploadProfilePicture = async (payload: { userId: string; base64: string }) => {
-  try {
-    // Chama a API passando endpoint, método e corpo
-    const data = await apiRequest(`/profile_photos/${payload.userId}`, "POST", {
-      image: payload.base64,
-    });
-
-    // Retorna o objeto com a imagem base64
-    return data; // { image: "...base64..." }
-  } catch (err) {
-    console.error("🚨 Erro ao enviar foto de perfil:", err);
-    throw err;
-  }
+type UploadResponse = {
+  url?: string;
 };
+
+export async function uploadProfilePicture(userId: string, uri: string): Promise<UploadResponse> {
+  try {
+    // 🔹 Certifica que uri é string
+    if (typeof uri !== "string") throw new Error("URI inválida");
+
+    // 🔹 Extrai o nome do arquivo
+    const uriParts = uri.split("/");
+    const fileName = uriParts[uriParts.length - 1];
+
+    // 🔹 Descobre o tipo MIME básico a partir da extensão
+    const fileExt = fileName.split(".").pop()?.toLowerCase();
+    let mimeType = "image/jpeg";
+    if (fileExt === "png") mimeType = "image/png";
+
+    // 🔹 Cria objeto para envio via FormData
+    const formData = new FormData();
+    
+    // Adiciona a imagem ao FormData
+    formData.append("photo", {
+      uri: Platform.OS === "ios" ? uri.replace("file://", "") : uri,
+      name: fileName,
+      type: mimeType,
+    } as any);
+
+    // 🔹 Faz o POST para a API usando apiRequest
+    const endpoint = `/profile-pictures`;
+    
+    const data = await apiRequest(
+      endpoint,
+      "POST",
+      formData, // O body é o FormData
+      undefined,
+    );
+
+    // data já é o JSON parseado retornado pelo servidor
+    return { url: data.url }; 
+  } catch (error) {
+    console.error("Erro no upload da imagem:", error);
+    throw error;
+  }
+}

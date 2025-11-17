@@ -21,6 +21,7 @@ model User {
   categories   Category[]
   transactions Transaction[]
   budgets  Budget[]
+  notifications Notification[]
   profilePicture    ProfilePicture?
 
   @@map("users")
@@ -74,4 +75,21 @@ model ProfilePicture {
   user        User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@map("profile_photos")
+}
+
+model Notification {
+  id         Int        @id @default(autoincrement()) 
+  user_id    Int
+  user       User       @relation(fields: [user_id], references: [id])
+  type       String     @db.VarChar(50)
+  title      String     @db.VarChar(255)
+  body       String?    @db.Text
+  is_read    Boolean    @default(false)
+  link_url   String?    @db.VarChar(255)
+  metadata   Json?      @db.JsonB
+  created_at DateTime   @default(now()) @db.Timestamptz(6)
+
+  @@map("user_notifications")
+  // Índice otimizado
+  @@index([user_id, is_read, created_at(sort: Desc)]) 
 }

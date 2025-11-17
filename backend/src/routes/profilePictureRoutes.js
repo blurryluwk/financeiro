@@ -1,7 +1,8 @@
 import express from "express";
 import ProfilePictureController from "../controllers/profilePictureController.js";
-import { protect } from "../../middlewares/authMiddleware.js";
 import upload from "../../middlewares/uploadMiddleware.js";
+import authMiddleware from "../../middlewares/authMiddleware.js"; 
+import multer from "multer";
 
 const router = express.Router();
 
@@ -25,13 +26,13 @@ const multerErrorHandler = (req, res, next) => {
 
 // 1. Rota de Upload (POST)
 router.post(
-  "/upload",
-  protect, // 1. Autentica
-  multerErrorHandler, // 2. ✅ Captura o arquivo E TRATA ERROS DO MULTER
-  ProfilePictureController.uploadPhoto // 3. Executa a lógica do controlador
+  "/", 
+  authMiddleware, 
+  multerErrorHandler, 
+  ProfilePictureController.uploadPhoto 
 );
 
-// 2. Rota GET
-router.get("/me", protect, ProfilePictureController.getPhoto);
+// 2. Rota GET 
+router.get("/me", authMiddleware, ProfilePictureController.getPhoto); 
 
 export default router;

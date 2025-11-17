@@ -11,20 +11,17 @@ import {
     ActivityIndicator,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import { updateUser } from "@/services/auth"; // função que envia dados
+import { updateUser } from "@/services/auth";
 import Colors from "@/constants/Colors";
-// import { uploadProfilePicture } from "@/services/photo"; // Função de upload removida/comentada
+import { uploadProfilePicture } from "@/services/photo";
 
 type UserEditModalProps = {
     visible: boolean;
     onClose: () => void;
-    // O tipo 'user' não precisa ter 'profileImage' se o modal não o utiliza.
     user: { id: string; name: string | null };
-    // CORREÇÃO DE TIPAGEM: Mantido como (name: string) => void,
-    // mas agora garantimos que o handleSave o chama corretamente.
     setUserName: (name: string) => void;
-    // O setProfileImage não será chamado, mas mantido na interface se o componente pai o espera
     setProfileImage: (uri: string) => void;
+    profileImageUrl?: string | null;
 };
 
 export default function UserEditModal({
@@ -32,21 +29,23 @@ export default function UserEditModal({
     onClose,
     user,
     setUserName,
-    setProfileImage, // Mantido, mas não será usado no handleSave
+    setProfileImage,
+    profileImageUrl = null,
 }: UserEditModalProps) {
     const [name, setName] = useState(user.name || "");
     const [imageUri, setImageUri] = useState<string | null>(null);
-    const [imageBase64, setImageBase64] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
 
-    // Atualiza o estado sempre que o 'user' muda
     useEffect(() => {
         setName(user.name || "");
         setImageUri(null);
-        setImageBase64(null);
     }, [user]);
 
-    // Função para selecionar uma imagem
+    const handleClose = () => {
+        setImageUri(null);
+        onClose();
+    };
+
     const pickImage = async () => {
         try {
             const result = await ImagePicker.launchImageLibraryAsync({
@@ -54,12 +53,12 @@ export default function UserEditModal({
                 allowsEditing: true,
                 aspect: [1, 1],
                 quality: 0.8,
-                base64: true,
             });
 
-            if (!result.canceled && result.assets[0].uri) {
-                setImageUri(result.assets[0].uri);
-                setImageBase64(result.assets[0].base64 || null);
+            if (!result.canceled && result.assets.length > 0) {
+                // 🔹 Garantindo que imageUri seja sempre string
+                const asset = result.assets[0];
+                if (asset.uri) setImageUri(asset.uri);
             }
         } catch (error) {
             console.error("Erro ao selecionar imagem:", error);
@@ -67,37 +66,30 @@ export default function UserEditModal({
         }
     };
 
-    // Função para salvar as alterações no perfil
     const handleSave = async () => {
         const newName = name.trim();
         const currentName = user.name?.trim();
 
-        // 1. 🛑 Validação Inicial: Verifica se o nome está vazio ou se não houve alteração.
         if (!newName) {
             Alert.alert("Atenção", "O nome não pode estar vazio.");
             return;
         }
 
-        if (newName === currentName) {
-            Alert.alert("Atenção", "Nenhuma alteração de nome para salvar.");
-            onClose();
-            return;
-        }
-
         setLoading(true);
         try {
-            // 2. ✅ Atualiza o nome via API (updateUser usará apiRequest)
-            const updatedUser = await updateUser({
-                userId: user.id,
-                name: newName, // Usamos newName que já está trimado
-            });
-
-            // 3. ✨ Atualiza o estado no componente pai (conforme o tipo string)
-            if (updatedUser.name) {
-                setUserName(updatedUser.name);
+            // 🔹 Upload da imagem se imageUri foi alterada
+            if (imageUri) {
+                const uploaded = await uploadProfilePicture(user.id, imageUri);
+                if (uploaded.url) setProfileImage(uploaded.url);
             }
 
-            onClose(); // Fecha o modal após o sucesso
+            // 🔹 Atualiza o nome se mudou
+            if (newName !== currentName) {
+                const updatedUser = await updateUser({ userId: user.id, name: newName });
+                if (updatedUser.name) setUserName(updatedUser.name);
+            }
+
+            handleClose();
         } catch (error) {
             console.error("Erro ao atualizar usuário:", error);
             Alert.alert("Erro", "Não foi possível atualizar o usuário.");
@@ -115,12 +107,11 @@ export default function UserEditModal({
                     <TouchableOpacity onPress={pickImage} style={{ alignItems: "center" }}>
                         <Image
                             source={
-                                // Se imageUri existir (foi selecionado), use-o.
-                                // Caso contrário, você deve usar a foto de perfil do estado 'user'
-                                // (que não está sendo passado aqui, então vamos manter o default)
                                 imageUri
                                     ? { uri: imageUri }
-                                    : require("@/assets/images/default-profile.jpg")
+                                    : profileImageUrl
+                                        ? { uri: profileImageUrl }
+                                        : require("@/assets/images/default-profile.jpg")
                             }
                             style={styles.profileImage}
                         />
@@ -131,13 +122,13 @@ export default function UserEditModal({
                         style={styles.input}
                         value={name}
                         onChangeText={setName}
-                        placeholder={user.name || "Seu nome"}
+                        placeholder="Seu nome"
                     />
 
                     <View style={styles.buttons}>
                         <TouchableOpacity
                             style={[styles.button, styles.cancelButton]}
-                            onPress={onClose}
+                            onPress={handleClose}
                         >
                             <Text style={styles.buttonText}>Cancelar</Text>
                         </TouchableOpacity>
@@ -160,7 +151,6 @@ export default function UserEditModal({
     );
 }
 
-// Estilos
 const styles = StyleSheet.create({
     overlay: {
         flex: 1,

@@ -4,7 +4,6 @@ import transactionRoutes from "./src/routes/transactionRoutes.js";
 import userRoutes from "./src/routes/userRoutes.js";
 import categoryRoutes from "./src/routes/categoryRoutes.js";
 import budgetRoutes from "./src/routes/budgetRoutes.js";
-// ✅ ADIÇÃO: Importa as novas rotas de foto de perfil
 import profilePictureRoutes from "./src/routes/profilePictureRoutes.js"; 
 
 const app = express();
@@ -17,7 +16,7 @@ app.use("/api/transactions", transactionRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/budgets", budgetRoutes);
-app.use("/api/photos", profilePictureRoutes); 
+app.use("/api/profile-pictures", profilePictureRoutes); 
 
 const PORT = process.env.PORT || 3000;
 

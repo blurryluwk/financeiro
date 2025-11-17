@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
-const JWT_SECRET = process.env.JWT_SECRET || "zzzdefault_secret";
+const JWT_SECRET = process.env.JWT_SECRET || "zzz";
 
 const UserService = {
   register: async ({ name, email, password }) => {
