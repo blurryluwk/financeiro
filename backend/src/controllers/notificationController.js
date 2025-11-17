@@ -1,5 +1,5 @@
 // src/controllers/NotificationController.js
-import NotificationService from "../services/notificationService.js";
+import NotificationService from "./../services/notificationService.js";
 
 const NotificationController = {
   /**

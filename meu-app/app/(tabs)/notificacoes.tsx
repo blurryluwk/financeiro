@@ -2,14 +2,10 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
-// Importação do useNavigation do Expo Router
 import { useRouter } from 'expo-router'; 
-// Importação direta da função de autenticação
 import { getToken } from '../../services/auth'; 
-// Importação do Service e da tipagem (assumindo que o caminho é correto)
 import NotificationService, { Notification } from '../../services/notification'; 
 
-// --- Componente de Item da Notificação (ALTERADO) ---
 interface NotificationItemProps {
   item: Notification;
   onPress: (id: number, linkUrl: string | null) => void; // Ação de clique agora passa o linkUrl
