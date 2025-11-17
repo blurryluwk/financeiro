@@ -1,6 +1,10 @@
+// UserService.js
+
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { PrismaClient } from "@prisma/client";
+// 1. IMPORTAÇÃO NECESSÁRIA
+import NotificationService from "./notificationService.js"; 
 
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || "zzz";
@@ -21,6 +25,21 @@ const UserService = {
     const newUser = await prisma.user.create({
       data: { name, email, password_hash },
     });
+
+    // 2. CHAMADA DA FUNÇÃO DE CRIAÇÃO DA NOTIFICAÇÃO
+    try {
+      await NotificationService.createNotification({
+        userId: newUser.id,
+        type: "WELCOME",
+        title: "🎉 Bem-vindo(a) à Luton Money! 🎉",
+        body: "Sua conta foi ativada com sucesso. A partir de agora, o poder é seu! Comece a explorar e descobrir todas as ferramentas incríveis que preparamos! ",
+        linkUrl: "/",
+      });
+      // A falha na notificação não deve impedir o registro, apenas registramos o erro.
+    } catch (error) {
+      console.error("⚠️ Falha ao criar notificação de boas-vindas:", error);
+    }
+    // ----------------------------------------------------
 
     const token = jwt.sign({ id: newUser.id }, JWT_SECRET, { expiresIn: "7d" });
 
@@ -81,7 +100,7 @@ const UserService = {
       throw { status: 400, message: "O nome é obrigatório para atualização" };
     }
 
-    // ✅ CORREÇÃO AQUI: Converter o userId de String para Int
+    // Converter o userId de String para Int
     const idAsInt = parseInt(userId);
 
     // Validação extra para garantir que a conversão foi bem-sucedida

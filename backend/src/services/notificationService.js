@@ -1,5 +1,5 @@
 // src/services/NotificationService.js
-import NotificationRepository from '../repositories/NotificationRepository.js';
+import NotificationRepository from '../repositories/notificationRepository.js';
 
 const NotificationService = {
   /**

@@ -1,17 +1,17 @@
-import React from 'react';
+import React, { useMemo } from 'react'; // Adicionado useMemo para otimizar
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons'; 
 
 type TransactionCardProps = {
   description: string;
   amount: number;
-  date: string;
+  date: string; // Continua sendo a string ISO do backend
   type: 'income' | 'expense';
   category: string;
   
   onPress: () => void;
-  onDelete?: () => void;   // Tornamos opcional
-  showDelete?: boolean;    // Nova prop para controlar exibição do lixeiro
+  onDelete?: () => void;   
+  showDelete?: boolean;    
 };
 
 const TransactionCard: React.FC<TransactionCardProps> = ({
@@ -22,9 +22,35 @@ const TransactionCard: React.FC<TransactionCardProps> = ({
   category,
   onPress,
   onDelete,
-  showDelete = false, // padrão: não mostrar
+  showDelete = false,
 }) => {
   const amountColor = type === "income" ? "#10ac84" : "#ff4757";
+
+  // Função para formatar a data (DD/MM/YYYY)
+  const formattedDate = useMemo(() => {
+    try {
+      // Cria um objeto Date a partir da string ISO
+      const dateObj = new Date(date);
+
+      // Garante que a data é válida antes de formatar
+      if (isNaN(dateObj.getTime())) {
+        return "Data inválida";
+      }
+
+      // Usa toLocaleDateString para o formato DD/MM/YYYY (ajusta conforme a localidade)
+      // Forçando o formato 'pt-BR' para garantir DD/MM/YYYY
+      return dateObj.toLocaleDateString('pt-BR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      });
+      
+    } catch (e) {
+      console.error("Erro ao formatar data:", e);
+      return date; // Retorna a string original em caso de erro
+    }
+  }, [date]); // Recalcula apenas se a prop 'date' mudar
+
 
   return (
     <View style={styles.outerContainer}>
@@ -32,7 +58,8 @@ const TransactionCard: React.FC<TransactionCardProps> = ({
             <View style={styles.info}>
                 <Text style={styles.description}>{String(description)}</Text>
                 <Text style={styles.category}>{String(category)}</Text>
-                <Text style={styles.date}>{String(date)}</Text>
+                {/* USA A DATA FORMATADA */}
+                <Text style={styles.date}>{formattedDate}</Text> 
             </View>
             <View style={styles.amountContainer}>
                 <Text style={[styles.amount, { color: amountColor }]}>
@@ -57,6 +84,7 @@ const TransactionCard: React.FC<TransactionCardProps> = ({
 
 
 const styles = StyleSheet.create({
+// ... (Seus estilos permanecem os mesmos)
   outerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
