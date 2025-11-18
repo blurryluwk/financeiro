@@ -9,45 +9,46 @@ export async function apiRequest(
   endpoint: string,
   method: "GET" | "POST" | "PUT" | "DELETE" = "GET",
   body?: any,
-  tokenParam?: string
+  tokenParam?: string,
+  responseType: "json" | "text" | "blob" = "json"   // 🔥 ADICIONADO
 ) {
   const url = `${API_BASE_URL}${endpoint}`;
-  const isFormData = body instanceof FormData; // 👈 NOVIDADE: Verifica se o corpo é FormData
+  const isFormData = body instanceof FormData;
 
   try {
     const token = tokenParam || (await getToken());
 
-    // Monta cabeçalhos
     const headers: Record<string, string> = {};
-    
-    // ⚠️ CORREÇÃO CRÍTICA: SÓ DEFINE Content-Type SE NÃO FOR FormData
-    if (!isFormData) {
-      headers["Content-Type"] = "application/json";
-    }
-
+    if (!isFormData) headers["Content-Type"] = "application/json";
     if (token) headers.Authorization = `Bearer ${token}`;
-    
-    // Configurações da requisição
+
     const options: RequestInit = {
       method,
       headers,
-      // ⚠️ CORREÇÃO CRÍTICA: Envia o corpo diretamente se for FormData
-      body: body && method !== "GET" 
-            ? (isFormData ? body : JSON.stringify(body)) 
-            : undefined,
+      body:
+        body && method !== "GET"
+          ? isFormData
+            ? body
+            : JSON.stringify(body)
+          : undefined,
     };
 
-    // Log detalhado da requisição
     console.log("🌐 Enviando requisição:");
     console.log("➡️ URL:", url);
     console.log("➡️ Método:", method);
-    if (body) console.log("➡️ Corpo:", isFormData ? "[FormData Object]" : body); 
+    if (body) console.log("➡️ Corpo:", isFormData ? "[FormData]" : body);
     if (token) console.log("🔑 Token enviado:", token.slice(0, 10) + "...");
 
-    // Envia a requisição
     const response = await fetch(url, options);
 
-    // Lê resposta (mesmo se não for JSON)
+    // SE RESPONSE TYPE FOR BLOB → RETORNA DIRETO
+    if (responseType === "blob") {
+      const blob = await response.blob();
+      if (!response.ok) throw new Error("Erro ao baixar blob");
+      return blob;
+    }
+
+    // Continua como antes (text + parse JSON)
     const text = await response.text();
     let data: any = null;
 
@@ -59,19 +60,16 @@ export async function apiRequest(
       }
     }
 
-    // Log da resposta
     console.log("📥 Resposta recebida:");
     console.log("📊 Status:", response.status);
     console.log("📦 Dados:", data);
 
-    // Erro HTTP
     if (!response.ok) {
       const message =
         data?.error || `Erro ${response.status}: ${response.statusText}`;
       throw new Error(message);
     }
 
-    // Retorna dados
     return data;
   } catch (err: any) {
     console.error("🚨 Erro em apiRequest:", err.message || err);

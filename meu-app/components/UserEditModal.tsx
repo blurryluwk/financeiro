@@ -12,8 +12,8 @@ import {
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { updateUser } from "@/services/auth";
+import { getProfilePicture, uploadProfilePicture } from "@/services/photo";
 import Colors from "@/constants/Colors";
-import { uploadProfilePicture } from "@/services/photo";
 
 type UserEditModalProps = {
     visible: boolean;
@@ -36,16 +36,32 @@ export default function UserEditModal({
     const [imageUri, setImageUri] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
 
+    // Carrega nome e foto do usuário sempre que o modal abre ou o user muda
     useEffect(() => {
         setName(user.name || "");
         setImageUri(null);
-    }, [user]);
 
+        const loadProfileImage = async () => {
+            try {
+                const base64Image = await getProfilePicture();
+                if (base64Image) setImageUri(base64Image);
+            } catch (err) {
+                console.error("Erro ao buscar foto atual:", err);
+            }
+        };
+
+        if (visible) loadProfileImage();
+    }, [user, visible]);
+
+    // Função para fechar modal
     const handleClose = () => {
+        // 🔹 Atualiza a foto do layout com a foto atual ou upload recente
+        if (imageUri) setProfileImage(imageUri);
         setImageUri(null);
         onClose();
     };
 
+    // Seleção de imagem
     const pickImage = async () => {
         try {
             const result = await ImagePicker.launchImageLibraryAsync({
@@ -56,7 +72,6 @@ export default function UserEditModal({
             });
 
             if (!result.canceled && result.assets.length > 0) {
-                // 🔹 Garantindo que imageUri seja sempre string
                 const asset = result.assets[0];
                 if (asset.uri) setImageUri(asset.uri);
             }
@@ -66,6 +81,7 @@ export default function UserEditModal({
         }
     };
 
+    // Salvar alterações
     const handleSave = async () => {
         const newName = name.trim();
         const currentName = user.name?.trim();
@@ -77,10 +93,10 @@ export default function UserEditModal({
 
         setLoading(true);
         try {
-            // 🔹 Upload da imagem se imageUri foi alterada
-            if (imageUri) {
+            // 🔹 Upload de imagem se houve alteração
+            if (imageUri && !imageUri.startsWith("data:image")) {
                 const uploaded = await uploadProfilePicture(user.id, imageUri);
-                if (uploaded.url) setProfileImage(uploaded.url);
+                if (uploaded.url) setImageUri(uploaded.url);
             }
 
             // 🔹 Atualiza o nome se mudou

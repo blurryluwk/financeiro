@@ -8,6 +8,7 @@ import { useColorScheme } from "@/components/useColorScheme";
 import { useClientOnlyValue } from "@/components/useClientOnlyValue";
 import { getUser, logout } from "@/services/auth";
 import UserEditModal from "@/components/UserEditModal";
+import { getProfilePicture } from "@/services/photo"; // 👈 USANDO sua função
 
 type IconFamily = typeof FontAwesome6 | typeof MaterialCommunityIcons;
 
@@ -39,14 +40,18 @@ function ProfileCircle({
   onPress: () => void;
 }) {
   return (
-    <TouchableOpacity style={{ marginLeft: 15 }} onPress={onPress}>
+    <TouchableOpacity onPress={onPress} style={{ marginLeft: 15 }}>
       <Image
-        source={uri ? { uri } : require("@/assets/images/default-profile.jpg")}
+        source={
+          uri
+            ? { uri }
+            : require("@/assets/images/default-profile.jpg")
+        }
         style={{
-          width: 30,
-          height: 30,
-          borderRadius: 25,
-          backgroundColor: "#ccc",
+          width: 35,
+          height: 35,
+          borderRadius: 18,
+          backgroundColor: "#ddd",
         }}
       />
     </TouchableOpacity>
@@ -62,28 +67,42 @@ export default function TabLayout() {
   const [userName, setUserName] = useState<string | null>(null);
   const [profileImage, setProfileImage] = useState<string | null>(null);
 
-  // Modal visibility
   const [isModalVisible, setIsModalVisible] = useState(false);
   const openModal = () => setIsModalVisible(true);
   const closeModal = () => setIsModalVisible(false);
 
   useEffect(() => {
     const loadUser = async () => {
+      console.log("🔵 Carregando dados do usuário...");
+
       try {
+        // -----------------------------
+        // 1. Buscar usuário
+        // -----------------------------
         const u = await getUser();
+        console.log("🟣 getUser() retornou:", u);
+
         if (u) {
-          setUser({
-            id: u.id,
-            name: u.name,
-            email: u.email,
-          });
+          setUser(u);
           setUserName(u.name);
-          setProfileImage(u.profileImage || null);
+        }
+
+        // -----------------------------
+        // 2. Buscar foto do usuário
+        // -----------------------------
+        const base64Image = await getProfilePicture();
+
+        if (base64Image) {
+          console.log("🟢 Foto carregada BASE64");
+          setProfileImage(base64Image);
+        } else {
+          console.log("⚪ Nenhuma foto encontrada.");
         }
       } catch (error) {
-        console.error("Erro ao carregar usuário:", error);
+        console.error("🔴 Erro ao carregar usuário ou foto:", error);
       }
     };
+
     loadUser();
   }, []);
 
@@ -110,17 +129,18 @@ export default function TabLayout() {
             height: 60,
             paddingBottom: 6,
           },
+
           headerLeft: () => (
             <ProfileCircle uri={profileImage} onPress={openModal} />
           ),
+
           headerRight: () => (
             <TouchableOpacity onPress={handleLogout} style={{ marginRight: 15 }}>
-              <FontAwesome6 name="right-from-bracket" size={20} color="#d33" />
+              <FontAwesome6 name="right-from-bracket" size={22} color="#d33" />
             </TouchableOpacity>
           ),
-          headerStyle: { backgroundColor: "#fff" },
+
           headerTitleStyle: {
-            paddingLeft: 10,
             fontSize: 18,
             fontWeight: "600",
           },
@@ -129,7 +149,7 @@ export default function TabLayout() {
         <Tabs.Screen
           name="index"
           options={{
-            title: userName ? userName : "Dashboard",
+            title: userName ?? "Dashboard",
             tabBarIcon: ({ color, size }) => (
               <TabBarIcon
                 family={FontAwesome6}
@@ -140,10 +160,11 @@ export default function TabLayout() {
             ),
           }}
         />
+
         <Tabs.Screen
           name="transacoes"
           options={{
-            title: userName ? userName : "Transações",
+            title: "Transações",
             tabBarIcon: ({ color, size }) => (
               <TabBarIcon
                 family={MaterialCommunityIcons}
@@ -154,10 +175,11 @@ export default function TabLayout() {
             ),
           }}
         />
+
         <Tabs.Screen
           name="notificacoes"
           options={{
-            title: userName ? userName : "Notificações",
+            title: "Notificações",
             tabBarIcon: ({ color, size }) => (
               <TabBarIcon
                 family={FontAwesome6}
@@ -170,14 +192,13 @@ export default function TabLayout() {
         />
       </Tabs>
 
-      {/* Modal de edição do usuário */}
       {user && (
         <UserEditModal
           visible={isModalVisible}
           onClose={closeModal}
           setUserName={handleUserSave}
-          user={user} // Passando o 'user' inteiro aqui
-          setProfileImage={setProfileImage}
+          user={user}
+          setProfileImage={setProfileImage} // ← recarregará após upload!
         />
       )}
     </>
