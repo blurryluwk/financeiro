@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 20,
   },
-  title: { fontSize: 22, fontWeight: "bold" },
+  title: { fontSize: 22, fontWeight: "bold", color: '#000000ff'},
   centered: { flex: 1, justifyContent: "center", alignItems: "center" },
   errorText: {
     color: "red",
@@ -149,9 +149,11 @@ const styles = StyleSheet.create({
   reloadText: { color: "#fff", fontWeight: "600" },
   subtitle: {
     fontSize: 18,
-    fontWeight: "600",
+    fontWeight: "bold",
     marginBottom: 10,
     fontFamily: "System",
+    color: '#000000ff',
+
   },
   noDataText: {
     textAlign: "center",
