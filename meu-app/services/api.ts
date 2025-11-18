@@ -1,9 +1,6 @@
 import { getToken } from "./auth";
 
-const LOCAL_IP = "192.168.1.124";
-const LOCAL_PORT = 3000;
-
-const API_BASE_URL = "http://" + LOCAL_IP + `:${LOCAL_PORT}/api`;
+const API_BASE_URL = `https://unsubmergible-overpolemical-eddy.ngrok-free.dev/api`;
 
 export async function apiRequest(
   endpoint: string,
