@@ -34,7 +34,7 @@
 ## 🧩 Diagrama de Casos de Uso UML
 
 <p align="center">
-  <img src="./Diagrama UML.png" alt="Diagrama UML" width="800" />
+  <img src="./DiagramaUML.png" alt="Diagrama UML" width="800" />
 </p>
 
 ---
