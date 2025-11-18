@@ -39,6 +39,14 @@
 
 ---
 
+## 🧱 Diagrama de Classes
+
+<p align="center">
+  <img src="./DiagramaDeClasses.jpg" alt="Diagrama de Classes" width="800" />
+</p>
+
+---
+
 # 🛠️ Como Instalar e Rodar o Projeto Completo
 
 Este guia mostra como instalar **backend + frontend + banco + variáveis de ambiente**, começando do zero.
