@@ -76,7 +76,7 @@ npx prisma migrate dev
 npx prisma studio
 npm start
 
-📱 4. Frontend (Expo)
+# 📱 4. Frontend (Expo)
 
 cd ../meu-app
 npm install
@@ -89,6 +89,6 @@ touch .env
 
 API_URL=http://localhost:3000
 
-✅ 5. Iniciar a aplicação
+# ✅ 5. Iniciar a aplicação
 
 npx expo start
