@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Stack, useRouter, useSegments } from "expo-router";
-import { View, ActivityIndicator } from "react-native";
+import { View, ActivityIndicator, SafeAreaView } from "react-native";
 import { getUser } from "@/services/auth";
 
 export default function RootLayout() {
@@ -48,20 +48,21 @@ export default function RootLayout() {
     }
   }, [isLoading, isLoggedIn]);
 
-  if (isLoading) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: "center",
-          alignItems: "center",
-          backgroundColor: "#fff",
-        }}
-      >
-        <ActivityIndicator size="large" color="#4695a0" />
-      </View>
-    );
-  }
+
+if (isLoading) {
+  return (
+    <SafeAreaView
+      style={{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "#fff",
+      }}
+    >
+      <ActivityIndicator size="large" color="#4695a0" />
+    </SafeAreaView>
+  );
+}
 
   return <Stack screenOptions={{ headerShown: false }} />;
 }

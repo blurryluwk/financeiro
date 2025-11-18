@@ -8,7 +8,9 @@ import { useColorScheme } from "@/components/useColorScheme";
 import { useClientOnlyValue } from "@/components/useClientOnlyValue";
 import { getUser, logout } from "@/services/auth";
 import UserEditModal from "@/components/UserEditModal";
-import { getProfilePicture } from "@/services/photo"; // 👈 USANDO sua função
+import { getProfilePicture } from "@/services/photo";
+import { SafeAreaView } from "react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 type IconFamily = typeof FontAwesome6 | typeof MaterialCommunityIcons;
 
@@ -117,7 +119,7 @@ export default function TabLayout() {
   };
 
   return (
-    <>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
       <Tabs
         screenOptions={{
           headerShown: useClientOnlyValue(false, true),
@@ -129,17 +131,14 @@ export default function TabLayout() {
             height: 60,
             paddingBottom: 6,
           },
-
           headerLeft: () => (
             <ProfileCircle uri={profileImage} onPress={openModal} />
           ),
-
           headerRight: () => (
             <TouchableOpacity onPress={handleLogout} style={{ marginRight: 15 }}>
               <FontAwesome6 name="right-from-bracket" size={22} color="#d33" />
             </TouchableOpacity>
           ),
-
           headerTitleStyle: {
             fontSize: 18,
             fontWeight: "600",
@@ -164,7 +163,7 @@ export default function TabLayout() {
         <Tabs.Screen
           name="transacoes"
           options={{
-            title: "Transações",
+            title: userName ?? "Transações",
             tabBarIcon: ({ color, size }) => (
               <TabBarIcon
                 family={MaterialCommunityIcons}
@@ -179,7 +178,7 @@ export default function TabLayout() {
         <Tabs.Screen
           name="notificacoes"
           options={{
-            title: "Notificações",
+            title: userName ?? "Notificações",
             tabBarIcon: ({ color, size }) => (
               <TabBarIcon
                 family={FontAwesome6}
@@ -198,9 +197,9 @@ export default function TabLayout() {
           onClose={closeModal}
           setUserName={handleUserSave}
           user={user}
-          setProfileImage={setProfileImage} // ← recarregará após upload!
+          setProfileImage={setProfileImage}
         />
       )}
-    </>
+    </SafeAreaView>
   );
 }

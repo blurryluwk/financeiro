@@ -118,7 +118,7 @@ export default function NotificacoesScreen() {
   
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Histórico de Notificações</Text>
+      <Text style={styles.title}>Notificações</Text>
       <Text style={styles.subtitle}>Você tem **{unreadCount}** notificações não lidas.</Text>
       
       {notifications.length === 0 ? (
