@@ -1,6 +1,6 @@
-# 💰 FYnTech
+# 💰 Luton Money
 
-**FYnTEch** é um aplicativo de gestão financeira pessoal que ajuda você a controlar suas receitas, despesas e metas financeiras de forma simples, intuitiva e eficiente.
+**Luton Money** é um aplicativo de gestão financeira pessoal que ajuda você a controlar suas receitas, despesas e metas financeiras de forma simples, intuitiva e eficiente.
 
 ---
 
@@ -34,7 +34,7 @@
 ## 🧩 Diagrama de Casos de Uso UML
 
 <p align="center">
-  <img src="./Diagrama UML.png" alt="Diagrama UML do FYnTech" width="800" />
+  <img src="./Diagrama UML.png" alt="Diagrama UML" width="800" />
 </p>
 
 ---
